@@ -32,21 +32,29 @@ if (prefersReduced) {
   document.querySelectorAll('.rv').forEach(el => { el.style.opacity = '1'; el.style.transform = 'translateY(0)'; });
   document.querySelectorAll('.pt-label,.pt-title,.pt-body,.pt-divider,.pt-footnote').forEach(el => { el.style.opacity = '1'; el.style.transform = 'none'; });
 } else {
-  /* Hero entrance – staggered timeline */
-  const heroTl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+  /* Hero entrance — scroll-triggered so elements emerge from scroll momentum,
+     not from page load. Fires once when #hero enters the viewport. */
+  const heroTl = gsap.timeline({ paused: true, defaults: { ease: 'power1.out' } });
   heroTl
     .fromTo('.hero-eyebrow',
-            { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.75 })
+            { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.80 })
     .fromTo(['.hero-title .word-light', 'h1.hero-title em', '.hero-title .word-main'],
-            { opacity: 0, y: 28 }, { opacity: 1, y: 0, stagger: 0.13, duration: 0.72 }, '-=0.42')
+            { opacity: 0, y: 18 }, { opacity: 1, y: 0, stagger: 0.10, duration: 0.75 }, '-=0.42')
     .fromTo('.hero-body',
-            { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.65 }, '-=0.28')
+            { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.65 }, '-=0.28')
     .fromTo('.hero-actions',
-            { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.60 }, '-=0.38')
+            { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.60 }, '-=0.38')
     .fromTo('.hero-stats',
-            { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.70 }, '-=0.50')
+            { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.65 }, '-=0.50')
     .fromTo('.scroll-cue',
-            { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.55 }, '+=0.10');
+            { opacity: 0, y: 8  }, { opacity: 1, y: 0, duration: 0.55 }, '+=0.08');
+
+  ScrollTrigger.create({
+    trigger: '#hero',
+    start: 'top 82%',
+    once: true,
+    onEnter: () => heroTl.play()
+  });
 
   /* Blob float – GSAP replaces CSS blobFloat (x+scale only; y reserved for parallax) */
   gsap.to('.hero-blob-1', { x: 28, scale: 1.05, duration: 12, ease: 'sine.inOut', yoyo: true, repeat: -1 });
@@ -61,10 +69,11 @@ if (prefersReduced) {
   gsap.to('.hero-blob-3', { y: -18, ease: 'none',
     scrollTrigger: { trigger: '#hero', start: 'top top', end: 'bottom top', scrub: 2.5 } });
 
-  /* Section reveals – ScrollTrigger.batch replaces IntersectionObserver */
+  /* Section reveals — softer ease and reduced stagger keeps elements feeling
+     like they surface from the field rather than dropping in as UI. */
   ScrollTrigger.batch('.rv', {
-    onEnter: batch => gsap.to(batch, { opacity: 1, y: 0, duration: 0.65, ease: 'power2.out', stagger: 0.07 }),
-    start: 'top 88%',
+    onEnter: batch => gsap.to(batch, { opacity: 1, y: 0, duration: 0.70, ease: 'power1.out', stagger: 0.05 }),
+    start: 'top 90%',
     once: true
   });
 
@@ -72,12 +81,12 @@ if (prefersReduced) {
      Each element carries a distinct scrub lag so they settle at different rates,
      producing a depth-layered float that continues the simulation's scroll momentum
      into the DOM layer rather than snapping in as a separate UI event. */
-  const ptST = { trigger: '#post-tree', start: 'top 90%', end: 'top 25%' };
-  gsap.fromTo('.pt-label',   { opacity: 0, y: 16 }, { opacity: 1, y: 0, ease: 'power2.out', scrollTrigger: { ...ptST, scrub: 1.4 } });
-  gsap.fromTo('.pt-title',   { opacity: 0, y: 24 }, { opacity: 1, y: 0, ease: 'power2.out', scrollTrigger: { ...ptST, scrub: 1.8 } });
-  gsap.fromTo('.pt-body',    { opacity: 0, y: 14 }, { opacity: 1, y: 0, ease: 'power2.out', scrollTrigger: { ...ptST, scrub: 2.4 } });
-  gsap.fromTo('.pt-divider', { opacity: 0, scaleX: 0 }, { opacity: 1, scaleX: 1, ease: 'power2.out', scrollTrigger: { ...ptST, scrub: 1.6 } });
-  gsap.fromTo('.pt-footnote',{ opacity: 0, y: 8  }, { opacity: 1, y: 0, ease: 'power2.out', scrollTrigger: { ...ptST, scrub: 2.8 } });
+  const ptST = { trigger: '#post-tree', start: 'top 92%', end: 'top 15%' };
+  gsap.fromTo('.pt-label',   { opacity: 0, y: 16 }, { opacity: 0.85, y: 0, ease: 'power2.out', scrollTrigger: { ...ptST, scrub: 1.4 } });
+  gsap.fromTo('.pt-title',   { opacity: 0, y: 24 }, { opacity: 0.90, y: 0, ease: 'power2.out', scrollTrigger: { ...ptST, scrub: 1.8 } });
+  gsap.fromTo('.pt-body',    { opacity: 0, y: 14 }, { opacity: 0.88, y: 0, ease: 'power2.out', scrollTrigger: { ...ptST, scrub: 2.4 } });
+  gsap.fromTo('.pt-divider', { opacity: 0, scaleX: 0 }, { opacity: 0.55, scaleX: 1, ease: 'power2.out', scrollTrigger: { ...ptST, scrub: 1.6 } });
+  gsap.fromTo('.pt-footnote',{ opacity: 0, y: 8  }, { opacity: 0.70, y: 0, ease: 'power2.out', scrollTrigger: { ...ptST, scrub: 2.8 } });
 
   /* Button hover micro-animations (GSAP owns transform; CSS still handles color/shadow) */
   document.querySelectorAll('.btn-fill, .btn-outline, .cta-btn-fill, .cta-btn-ghost').forEach(el => {
@@ -89,6 +98,54 @@ if (prefersReduced) {
   document.querySelectorAll('.nav-links a').forEach(el => {
     el.addEventListener('mouseenter', () => gsap.to(el, { y: -2, duration: 0.20, ease: 'power2.out' }));
     el.addEventListener('mouseleave', () => gsap.to(el, { y:  0, duration: 0.25, ease: 'power2.out' }));
+  });
+
+  /* ── AMBIENT DOM BREATHING ──────────────────────────────────────────────────
+     Extends the canvas's continuous time-based life into the DOM layer.
+     Targets container elements only — never children under active GSAP control.
+
+     Frequency range: 9–27 s periods, matching canvas leaf-sway (~15 s primary,
+     ~48 s secondary via simulate() swayL/swayR). Negative delays seed each
+     element at a different phase in its cycle so no two containers pulse together.
+
+     All values are sub-2 px / ≤ 0.12 opacity swing — below the threshold of
+     conscious detection. The motion reads as environment, not animation.
+  ────────────────────────────────────────────────────────────────────────── */
+
+  /* Post-tree block — slowest drift, matches the atmospheric scrub zone */
+  gsap.to('.post-tree-inner', { y: 1.5, duration: 11,   ease: 'sine.inOut', repeat: -1, yoyo: true, delay: -4.2 });
+
+  /* Hero content — two-column grid treated as one atmospheric body */
+  gsap.to('.hero-inner',      { y: 1.0, duration: 14,   ease: 'sine.inOut', repeat: -1, yoyo: true, delay: -7.1 });
+
+  /* CTA block */
+  gsap.to('.cta-in',          { y: 1.0, duration: 13,   ease: 'sine.inOut', repeat: -1, yoyo: true, delay: -5.5 });
+
+  /* Content section containers — desynchronised via prime-ish duration offsets
+     so no two sections are ever at the same point in their drift cycle */
+  gsap.utils.toArray('.sec-inner').forEach((el, i) => {
+    gsap.to(el, {
+      y:        i % 2 === 0 ? 1.2 : 0.9,
+      duration: 9.4 + i * 2.3,
+      ease:     'sine.inOut',
+      repeat:   -1,
+      yoyo:     true,
+      delay:    -(i * 3.7 + 1.6)
+    });
+  });
+
+  /* Eyebrow labels — gentle opacity breath. Already low-contrast by design,
+     so a 1.0→0.88 swing over 12–27 s reads as the label inhabiting the
+     same atmospheric layer as the canvas text. */
+  gsap.utils.toArray('.sec-eyebrow').forEach((el, i) => {
+    gsap.to(el, {
+      opacity:  0.88,
+      duration: 12.4 + i * 2.1,
+      ease:     'sine.inOut',
+      repeat:   -1,
+      yoyo:     true,
+      delay:    -(i * 2.9 + 1.1)
+    });
   });
 }
 
@@ -181,6 +238,357 @@ function swMap(which, btn) {
   }
   resize();
   window.addEventListener('resize', () => { resize(); drawFrame(simulate(p, t)); });
+
+  /* ── THREE.JS PARALLEL RENDERER ────────────────────────────────────────────
+     Runs alongside drawFrame(sim). Same sim object, parallel render path.
+     Trunk: CylinderGeometry (MeshStandardMaterial, lit).
+     Branches: InstancedMesh — 800 pre-allocated cylinder instances.
+       buildBranches3D() mirrors Canvas drawBranch() recursion exactly.
+       Per instance: position at segment midpoint, rotation from branch angle,
+       scaleY = segment length, scaleX/Z = depth-tapered thickness.
+       Sway enters via initial branch angles and propagates through hierarchy.
+       Colour lerps trunk-brown → olive-green with depth.
+     Remove this block + #three-canvas in index.html to fully revert.
+  ─────────────────────────────────────────────────────────────────────────── */
+  const threeCanvas = document.getElementById('three-canvas');
+  let threeRenderer, threeScene, threeCamera, threeTrunk, threeBranches, threeLeaves;
+  let threeFlow, flowGeo, flowData;
+  const FLOW_N = 32;
+
+  // Identical LCG to Canvas rng() — separate seed so Canvas RNG is unaffected
+  let rng3DSeed = 0;
+  function rng3D() { rng3DSeed = (rng3DSeed * 9301 + 49297) % 233280; return rng3DSeed / 233280; }
+
+  let branchSegCount = 0;
+  let leafInstCount  = 0;
+  // Scratch objects allocated once — reused every frame, no per-frame heap pressure
+  const _obj        = new THREE.Object3D();
+  const _col        = new THREE.Color();
+  const _colTrunk   = new THREE.Color(0x7a5c38);  // warm desaturated bark brown
+  const _colTip     = new THREE.Color(0x566040);  // grey-olive for outer twigs
+  const _leafCol    = new THREE.Color();
+  const _colLeafA   = new THREE.Color(0x3d7228);  // deep forest green
+  const _colLeafB   = new THREE.Color(0x6aaa38);  // natural mid green
+  const _leafData   = Array.from({ length: 1200 }, () => ({ x: 0, y: 0, z: 0, phase: 0, branchAngle: 0, tiltX: 0, scaleV: 1, cg: 0 }));
+
+  // Leaf-shaped BufferGeometry — 8-segment fan, 0.44:1 width:height ratio.
+  // Allocated once, reused by InstancedMesh; no per-frame allocations.
+  function makeLeafGeo() {
+    const pos = [], idx = [], n = 8;
+    pos.push(0, 0, 0);
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2;
+      pos.push(0.22 * Math.sin(a), 0.50 * Math.cos(a), 0);
+    }
+    for (let i = 0; i < n; i++) idx.push(0, 1 + i, 1 + (i + 1) % n);
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    geo.setIndex(idx);
+    geo.computeVertexNormals();
+    return geo;
+  }
+
+  (function initThree() {
+    const W3 = 480, H3 = 360;
+    threeRenderer = new THREE.WebGLRenderer({ canvas: threeCanvas, alpha: true, antialias: true });
+    // updateStyle:false — CSS owns display size; buffer stays at W3×H3
+    threeRenderer.setSize(W3, H3, false);
+    threeRenderer.setClearColor(0x000000, 0);
+
+    threeScene = new THREE.Scene();
+    // Fog color matches page background (rgb 245,243,238 ≈ 0xf5f3ee); linear, starts
+    // just in front of tree so depth Z-layers fade naturally toward far end
+    threeScene.fog = new THREE.Fog(0xf2f0ea, 4.0, 8.0);
+
+    threeCamera = new THREE.PerspectiveCamera(48, W3 / H3, 0.1, 100);
+    threeCamera.position.set(0, 0.5, 4.5);
+    threeCamera.lookAt(0, 0.2, 0);
+
+    // Ambient: kept low so directional lights define form rather than flatten everything
+    threeScene.add(new THREE.AmbientLight(0xd4e8f0, 0.18));
+
+    // Key light — warm, upper-left-front; primary source of highlights on branches
+    const keyLight = new THREE.DirectionalLight(0xfff0d0, 1.10);
+    keyLight.position.set(-2.0, 4.0, 2.0);
+    threeScene.add(keyLight);
+
+    // Fill light — cool, from right at mid-height; softens key-side shadows
+    const fillLight = new THREE.DirectionalLight(0xb8d4f0, 0.38);
+    fillLight.position.set(2.8, 0.8, 1.5);
+    threeScene.add(fillLight);
+
+    // Rim light — very low, from behind; outlines tips against background
+    const rimLight = new THREE.DirectionalLight(0xd0f0d8, 0.22);
+    rimLight.position.set(0.3, 1.5, -3.5);
+    threeScene.add(rimLight);
+
+    // Trunk — dark bark, high roughness for matte woody look
+    const trunkGeo = new THREE.CylinderGeometry(0.06, 0.14, 2.2, 7);
+    threeTrunk = new THREE.Mesh(trunkGeo, new THREE.MeshStandardMaterial({ color: 0x6e5030, roughness: 0.90 }));
+    threeTrunk.position.y = -0.3;
+    threeScene.add(threeTrunk);
+
+    // Branches — white base so instance colors are not tinted (same as leaves)
+    const branchGeo = new THREE.CylinderGeometry(0.5, 0.5, 1, 6);
+    const branchMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85 });
+    threeBranches = new THREE.InstancedMesh(branchGeo, branchMat, 800);
+    threeBranches.count = 0;
+    // Pre-init instanceColor so Three.js compiles the shader with USE_INSTANCING_COLOR
+    // from the first frame. Without this, the shader is compiled while instanceColor
+    // is null (branchProg=0 at load), and later setColorAt calls are silently ignored.
+    threeBranches.setColorAt(0, _colTrunk);
+    threeScene.add(threeBranches);
+
+    // Leaves — white base so instance colors are not tinted; leaf-shaped geometry
+    const leafGeo = makeLeafGeo();
+    const leafMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.75, side: THREE.DoubleSide });
+    threeLeaves = new THREE.InstancedMesh(leafGeo, leafMat, 1200);
+    threeLeaves.count = 0;
+    // Same pre-init for leaves — forces instance color path in shader from first compile.
+    threeLeaves.setColorAt(0, _colLeafA);
+    threeScene.add(threeLeaves);
+
+    // Airflow wisps — 4 pts per wisp (left, mid, mid, right) so LineSegments draws
+    // two connected sub-segments whose midpoint can arc independently.
+    // depthWrite:false, fog:true — same depth integration as before.
+    const flowBuf = new Float32Array(FLOW_N * 12); // 4 pts × 3 floats per wisp
+    flowGeo = new THREE.BufferGeometry();
+    flowGeo.setAttribute('position', new THREE.BufferAttribute(flowBuf, 3));
+    threeFlow = new THREE.LineSegments(flowGeo, new THREE.LineBasicMaterial({
+      color: 0xaaccb8, opacity: 0.07, transparent: true, fog: true, depthWrite: false
+    }));
+    threeScene.add(threeFlow);
+
+    // Wisp properties — one seeded LCG run at init, never touched again.
+    // First 62% are canopy-biased (Y ∈ [0.1, 1.4]) for density near leaf clusters.
+    let fSeed = 7919;
+    const fRng = () => { fSeed = (fSeed * 9301 + 49297) % 233280; return fSeed / 233280; };
+    const _cc = Math.floor(FLOW_N * 0.62);
+    flowData = Array.from({ length: FLOW_N }, (_, i) => ({
+      baseY:   i < _cc ? 0.10 + fRng() * 1.30   // canopy zone: trunk-top → above crown
+                       : -0.60 + fRng() * 2.40,  // full range: sub-trunk → sky
+      z:       -0.35 + fRng() * 0.70,
+      phase:    fRng() * 7.0,
+      speed:    0.20  + fRng() * 0.15,
+      halfLen:  0.10  + fRng() * 0.15,
+      dy:      (fRng() - 0.5) * 0.08,
+      vy:       0.02  + fRng() * 0.04,   // vertical undulation amplitude
+      vFreq:    0.25  + fRng() * 0.30,   // undulation frequency, rad/s
+    }));
+  })();
+
+  // Mirrors Canvas drawBranch() recursion exactly.
+  // Coordinate space: +x right, +y up (Three.js), z = 0 (flat tree facing camera).
+  // lerp/clamp are hoisted function declarations — safe to call before their source.
+  function buildBranches3D(x1, y1, angle, len, depth, maxD, prog) {
+    const bp = clamp((prog - depth / maxD * 0.55) / (1 / maxD * 0.9), 0, 1);
+    if (bp <= 0 || branchSegCount >= 800) return;
+
+    // Per-branch organic variation — all seeded via rng3D so the tree is
+    // identical each run. Seed resets to 42/84 in renderThree before each arm.
+    const lenVar   = 0.91 + rng3D() * 0.18;                            // ±9 % length noise
+    const thickVar = 0.84 + rng3D() * 0.32;                            // ±16 % thickness noise
+    const cr       = (rng3D() - 0.5) * 0.07;                           // colour noise R
+    const cg       = (rng3D() - 0.5) * 0.06;                           // colour noise G
+    const cb       = (rng3D() - 0.5) * 0.05;                           // colour noise B
+    // Outer branches wobble more — inner scaffold stays clean
+    const bendFrac = (rng3D() - 0.5) * lerp(0.08, 0.22, depth / maxD);
+
+    const segLen = len * bp * lenVar;
+    const x2 = x1 + Math.cos(angle) * segLen;
+    const y2 = y1 + Math.sin(angle) * segLen;
+
+    // Power curve taper: gradual for primary scaffold, rapid at outer twigs.
+    // Base range 0.068→0.016: depth-0 just under trunk-top radius (0.06); twigs
+    // stay thick enough to read against leaves and support visual weight.
+    const thickness = lerp(0.068, 0.016, Math.pow(depth / maxD, 0.75)) * thickVar;
+
+    _col.lerpColors(_colTrunk, _colTip, depth / maxD);
+    _col.r = Math.max(0, Math.min(1, _col.r + cr));
+    _col.g = Math.max(0, Math.min(1, _col.g + cg));
+    _col.b = Math.max(0, Math.min(1, _col.b + cb));
+
+    // Micro-bending: offset midpoint perpendicularly, emit two sub-cylinders.
+    // (-sin, cos) is the unit perpendicular to (cos, sin) rotated 90° CCW.
+    const perpX = -Math.sin(angle) * bendFrac * segLen;
+    const perpY =  Math.cos(angle) * bendFrac * segLen;
+    const midX  = (x1 + x2) * 0.5 + perpX;
+    const midY  = (y1 + y2) * 0.5 + perpY;
+
+    // Trunk forward, tips back — wider range gives fog a stronger depth gradient
+    const zOff = (0.5 - depth / maxD) * 0.35;
+    let sa, sl;
+
+    // First half: x1 → mid
+    sa = Math.atan2(midY - y1, midX - x1);
+    sl = Math.hypot(midX - x1, midY - y1);
+    _obj.position.set((x1 + midX) * 0.5, (y1 + midY) * 0.5, zOff);
+    _obj.rotation.set(0, 0, sa - Math.PI / 2);
+    _obj.scale.set(thickness, sl, thickness);
+    _obj.updateMatrix();
+    threeBranches.setMatrixAt(branchSegCount, _obj.matrix);
+    threeBranches.setColorAt(branchSegCount, _col);
+    branchSegCount++;
+
+    // Second half: mid → x2
+    if (branchSegCount < 800) {
+      sa = Math.atan2(y2 - midY, x2 - midX);
+      sl = Math.hypot(x2 - midX, y2 - midY);
+      _obj.position.set((midX + x2) * 0.5, (midY + y2) * 0.5, zOff);
+      _obj.rotation.set(0, 0, sa - Math.PI / 2);
+      _obj.scale.set(thickness, sl, thickness);
+      _obj.updateMatrix();
+      threeBranches.setMatrixAt(branchSegCount, _obj.matrix);
+      threeBranches.setColorAt(branchSegCount, _col);
+      branchSegCount++;
+    }
+
+    if (bp > 0.8 && depth < maxD) {
+      const spread = lerp(0.52, 0.36, depth / maxD);
+      const nl     = len * lerp(0.73, 0.65, depth / maxD);
+      // Angle jitter: tighter at scaffold, looser at outer twigs for organic silhouette
+      const angVar = lerp(0.06, 0.30, depth / maxD);
+      rng3D(); const jL = (rng3D() - 0.5) * angVar;
+      rng3D(); const jR = (rng3D() - 0.5) * angVar;
+      buildBranches3D(x2, y2, angle + spread + jL, nl, depth + 1, maxD, prog);
+      buildBranches3D(x2, y2, angle - spread + jR, nl, depth + 1, maxD, prog);
+      if (depth < maxD - 2 && rng3D() > 0.45)
+        buildBranches3D(x2, y2, angle + (rng3D() - 0.5) * 0.4, nl * 0.55, depth + 2, maxD, prog);
+    }
+
+    // Leaf cluster at branch tips — outer 2 depth levels, after all recursion.
+    // Placement biased along and perpendicular to branch direction so leaves
+    // feel attached to the twig rather than floating as a uniform cloud.
+    if (depth >= maxD - 1 && bp > 0.75 && leafInstCount < 1195) {
+      const cnt = 3 + Math.floor(rng3D() * 4);  // 3–6 leaves per tip
+      const bDx = Math.cos(angle);  // branch direction X
+      const bDy = Math.sin(angle);  // branch direction Y
+      const pDx = -bDy;             // perpendicular X
+      const pDy =  bDx;             // perpendicular Y
+      for (let i = 0; i < cnt && leafInstCount < 1200; i++) {
+        const ld      = _leafData[leafInstCount];
+        // along: 0→+0.07 (forward from tip), never behind; perp: ±0.065
+        const along   = rng3D() * 0.07;
+        const perp    = (rng3D() - 0.5) * 0.13;
+        ld.x          = x2 + along * bDx + perp * pDx;
+        ld.y          = y2 + along * bDy + perp * pDy;
+        ld.phase      = rng3D() * Math.PI * 2;
+        // Z rotation centered on branch direction with ±34° spread
+        ld.branchAngle = angle - Math.PI * 0.5 + (rng3D() - 0.5) * 1.2;
+        // Static per-leaf X tilt for 3D depth — so leaves face different angles
+        ld.tiltX      = (rng3D() - 0.5) * 0.65;
+        ld.scaleV     = 0.55 + rng3D() * 0.50;  // 0.55–1.05, smaller outer leaves
+        ld.cg         = rng3D();
+        ld.z          = (0.5 - depth / maxD) * 0.35 + (rng3D() - 0.5) * 0.08;
+        leafInstCount++;
+      }
+    }
+  }
+
+  function renderThree(sim) {
+    threeTrunk.scale.y = 0.05 + sim.trunkGrowth * 0.95;
+    threeTrunk.scale.x = 0.4 + sim.trunkWeight * 0.6;
+    threeTrunk.scale.z = 0.4 + sim.trunkWeight * 0.6;
+    const trunkTop = -0.3 + 1.1 * threeTrunk.scale.y;
+
+    branchSegCount = 0;
+    leafInstCount  = 0;
+    if (sim.branchProg > 0) {
+      const bLen = lerp(0.1, 0.9, sim.branchScale);
+      rng3DSeed = 42;
+      buildBranches3D(0, trunkTop, Math.PI / 2 + 0.44 + sim.swayL, bLen, 0, sim.branchDepth, sim.branchProg);
+      rng3DSeed = 84;
+      buildBranches3D(0, trunkTop, Math.PI / 2 - 0.44 + sim.swayR, bLen, 0, sim.branchDepth, sim.branchProg);
+    }
+
+    threeBranches.count = branchSegCount;
+    threeBranches.instanceMatrix.needsUpdate = true;
+    if (threeBranches.instanceColor) threeBranches.instanceColor.needsUpdate = true;
+
+    // Animate leaf instances — positions set during branch traversal, airflow + flutter added here
+    threeLeaves.count = leafInstCount;
+
+    // Global airflow vector — slow drift, +X bias with slight upward lift
+    const afTime = sim.t * 0.055;
+    const afX    = 0.022 + 0.010 * Math.sin(afTime);
+    const afY    = 0.010 + 0.005 * Math.sin(afTime * 1.41 + 0.6);
+    // Canopy wave — same base frequency for all leaves; ld.x shifts phase so
+    // the wave travels in the wind direction (+X) rather than pulsing uniformly
+    const waveT  = sim.t * 0.38;
+
+    for (let i = 0; i < leafInstCount; i++) {
+      const ld   = _leafData[i];
+
+      // Existing flutter — kept as secondary, high-frequency motion
+      const flt  = 0.009 * Math.sin(sim.t * 2.3 + ld.phase);
+      const fltY = 0.006 * Math.sin(sim.t * 1.7 + ld.phase + 1.1);
+
+      // Depth-based reactivity: scaleV 0.55–1.05 → react 1.25–0.75
+      // Smaller (outer) leaves swing more; larger (inner) leaves are damped
+      const react = 1.25 - (ld.scaleV - 0.55) * 1.0;
+
+      // Traveling wave: spatial phase from ld.x makes the wave propagate +X
+      // through canopy; ld.phase * 0.15 adds per-leaf variation without
+      // breaking the group coherence
+      const wave  = Math.sin(waveT - ld.x * 3.0 + ld.phase * 0.15);
+
+      // Airflow displacement — added to base position, never overrides it
+      const dispX = (afX + wave * 0.014) * react;
+      const dispY = (afY + wave * 0.007) * react;
+
+      _obj.position.set(ld.x + dispX + flt, ld.y + dispY + fltY, ld.z + flt * 0.5);
+
+      // Rotation: permanent Y-axis lean into wind + wave nod on X-axis
+      // ld.phase static tilt preserved from original; flt*6 flutter on Z preserved
+      const tiltY = 0.12 * react;
+      const tiltX = 0.10 * wave * react + 0.28 * Math.sin(ld.phase);
+      // tiltX: dynamic airflow lean + ld.tiltX static per-leaf 3D orientation
+      _obj.rotation.set(tiltX + ld.tiltX, tiltY, ld.branchAngle + flt * 4);
+
+      _obj.scale.setScalar(0.044 * ld.scaleV);
+      _obj.updateMatrix();
+      threeLeaves.setMatrixAt(i, _obj.matrix);
+      _leafCol.lerpColors(_colLeafA, _colLeafB, ld.cg);
+      threeLeaves.setColorAt(i, _leafCol);
+    }
+    threeLeaves.instanceMatrix.needsUpdate = true;
+    if (threeLeaves.instanceColor) threeLeaves.instanceColor.needsUpdate = true;
+
+    // Update airflow wisps — two sub-segments per wisp (left→mid, mid→right).
+    // The midpoint arcs upward inside the canopy X zone, simulating flow deflected
+    // by the leaf mass. Arc is always ≥ 0 (air lifts over the dome, never pushes down).
+    const _fp   = flowGeo.attributes.position.array;
+    const _trav = 7.0;
+    for (let i = 0; i < FLOW_N; i++) {
+      const fd  = flowData[i];
+      const cx  = (sim.t * fd.speed + fd.phase) % _trav - _trav * 0.5;
+      const xl  = cx - fd.halfLen;
+      const xr  = cx + fd.halfLen;
+
+      // Per-wisp vertical undulation — slow, independent of canopy
+      const yBase = fd.baseY + fd.vy * Math.sin(sim.t * fd.vFreq + fd.phase);
+
+      // Canopy arc at midpoint: strongest when cx is near tree center (|cx| < 1.1),
+      // only for wisps already in canopy Y band. Oscillates gently so it reads as
+      // living breath rather than a fixed deflector shape.
+      const cxFactor = Math.max(0, 1.0 - Math.abs(cx) / 1.1);
+      const cyFactor = fd.baseY > 0.1 && fd.baseY < 1.5 ? 1.0 : 0.25;
+      const arc = cxFactor * cyFactor * (0.04 + 0.03 * Math.sin(sim.t * 0.32 + fd.phase * 1.4));
+
+      const yL = yBase + fd.dy * (-fd.halfLen);
+      const yM = yBase + arc;
+      const yR = yBase + fd.dy * fd.halfLen;
+      const b  = i * 12;
+
+      _fp[b     ] = xl;  _fp[b +  1] = yL;  _fp[b +  2] = fd.z;  // left
+      _fp[b +  3] = cx;  _fp[b +  4] = yM;  _fp[b +  5] = fd.z;  // mid
+      _fp[b +  6] = cx;  _fp[b +  7] = yM;  _fp[b +  8] = fd.z;  // mid (dup for seg 2 start)
+      _fp[b +  9] = xr;  _fp[b + 10] = yR;  _fp[b + 11] = fd.z;  // right
+    }
+    flowGeo.attributes.position.needsUpdate = true;
+
+    threeRenderer.render(threeScene, threeCamera);
+  }
 
   function lerp(a, b, t) { return a + (b - a) * t; }
   function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
@@ -474,7 +882,9 @@ function swMap(which, btn) {
 
   function loop() {
     t = performance.now() * 0.001;
-    drawFrame(simulate(p, t));
+    const sim = simulate(p, t);
+    drawFrame(sim);
+    renderThree(sim);
     requestAnimationFrame(loop);
   }
 

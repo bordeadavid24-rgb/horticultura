@@ -154,7 +154,7 @@ nav.scrolled {
   display: grid; place-items: center;
   padding: 8rem 6vw 6rem;
   position: relative; overflow: hidden;
-  background: linear-gradient(160deg, #f0f7f2 0%, #f5f3ee 40%, #ede8df 100%);
+  background: linear-gradient(180deg, var(--bg-page) 0%, #eef4ef 50%, #ede8df 100%);
 }
 /* Organic blobs */
 .hero-blob {
@@ -354,7 +354,7 @@ h2.sec-title em { font-style:italic; color:var(--green-600); }
 }
 
 /* Reveal animation */
-.rv { opacity:0; transform:translateY(28px); }
+.rv { opacity:0; transform:translateY(14px); }
 
 /* ─────────────────────────────────────────────
    PROBLEMA
@@ -405,9 +405,7 @@ h2.sec-title em { font-style:italic; color:var(--green-600); }
    SOLUȚIA
 ───────────────────────────────────────────── */
 #solutia {
-  background: linear-gradient(180deg, var(--bg-tinted) 0%, var(--bg-surface) 100%);
-  border-top:1px solid var(--border-light);
-  border-bottom:1px solid var(--border-light);
+  background: linear-gradient(180deg, var(--bg-page) 0%, var(--bg-tinted) 8%, var(--bg-surface) 100%);
 }
 .sol-grid {
   display:grid; grid-template-columns:1.1fr 1fr;
@@ -525,9 +523,7 @@ h3.fez-col::after { content:''; flex:1; height:1px; background:var(--gold-pale);
    HARTĂ
 ───────────────────────────────────────────── */
 #harta {
-  background: linear-gradient(180deg, var(--bg-surface) 0%, var(--bg-tinted) 100%);
-  border-top:1px solid var(--border-light);
-  border-bottom:1px solid var(--border-light);
+  background: linear-gradient(180deg, var(--bg-page) 0%, var(--bg-surface) 8%, var(--bg-tinted) 100%);
 }
 .map-wrap { display:grid; grid-template-columns:1fr 270px; gap:2rem; margin-top:2.5rem; align-items:start; }
 .map-stage {
@@ -613,8 +609,7 @@ h3.fez-col::after { content:''; flex:1; height:1px; background:var(--gold-pale);
    IMPLEMENTARE – timeline
 ───────────────────────────────────────────── */
 #implementare {
-  background:linear-gradient(180deg, var(--bg-tinted) 0%, var(--bg-surface) 100%);
-  border-top:1px solid var(--border-light);
+  background: linear-gradient(180deg, var(--bg-page) 0%, var(--bg-tinted) 8%, var(--bg-surface) 100%);
 }
 .impl-grid { display:grid; grid-template-columns:1fr 1fr; gap:4rem; margin-top:3rem; }
 .timeline { position:relative; padding-left:2.2rem; }
@@ -650,8 +645,7 @@ h3.fez-col::after { content:''; flex:1; height:1px; background:var(--gold-pale);
    BUGET
 ───────────────────────────────────────────── */
 #buget {
-  background:var(--bg-page);
-  border-top:1px solid var(--border-light);
+  background: linear-gradient(180deg, var(--bg-surface) 0%, var(--bg-page) 10%);
 }
 .budget-grid { display:grid; grid-template-columns:1.2fr 1fr; gap:4rem; align-items:start; margin-top:3rem; }
 table.bt { width:100%; border-collapse:collapse; border:1px solid var(--border-light); border-radius:.6rem; overflow:hidden; }
@@ -682,8 +676,7 @@ table.bt tfoot td {
    REFERINȚE
 ───────────────────────────────────────────── */
 #referinte {
-  background:var(--bg-surface);
-  border-top:1px solid var(--border-light);
+  background: linear-gradient(180deg, var(--bg-page) 0%, var(--bg-surface) 10%);
 }
 .refs-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:.9rem; margin-top:2.5rem; }
 .ref-item {
@@ -804,23 +797,24 @@ footer p { font-family:var(--ff-mono); font-size:.62rem; color:var(--text-faint)
 
 /* ─────────────────────────────────────────────
    POST-TREE LANDING
-   Background is transparent so the fixed ambient
-   canvas + airflow SVG bleed through — the same
-   "airspace" that surrounds the tree canvas.
-   Top/bottom gradients bridge the two adjacent
-   solid-background sections without hard cuts.
+   background: transparent lets the fixed ambient
+   canvas + airflow bleed through — shared airspace.
+   ::before combines a top linear bridge (canvas exit)
+   with a full-section radial glow so text floats in
+   atmosphere rather than sitting on a hard strip.
 ───────────────────────────────────────────── */
 #post-tree {
   background: transparent;
-  padding: 12vh 6vw 6rem;
+  padding: 22vh 6vw 6rem;
   position: relative;
 }
 #post-tree::before {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 130px;
-  background: linear-gradient(to bottom, var(--bg-page) 0%, transparent 100%);
+  inset: 0;
+  background:
+    linear-gradient(to bottom, var(--bg-page) 0%, transparent 20%),
+    radial-gradient(ellipse 80% 60% at 50% 50%, rgba(245,243,238,0.65) 0%, transparent 70%);
   pointer-events: none;
   z-index: 1;
 }
@@ -828,7 +822,7 @@ footer p { font-family:var(--ff-mono); font-size:.62rem; color:var(--text-faint)
   content: '';
   position: absolute;
   bottom: 0; left: 0; right: 0;
-  height: 130px;
+  height: 160px;
   background: linear-gradient(to top, var(--bg-page) 0%, transparent 100%);
   pointer-events: none;
   z-index: 1;
@@ -868,9 +862,10 @@ footer p { font-family:var(--ff-mono); font-size:.62rem; color:var(--text-faint)
   font-weight: 500;
 }
 .pt-body {
-  font-size: .96rem;
+  font-size: .88rem;
   color: rgba(45,80,52,0.68);
   line-height: 1.88;
+  letter-spacing: .015em;
   max-width: 54ch;
   margin: 0 auto 2.5rem;
   opacity: 0;
@@ -935,6 +930,46 @@ footer p { font-family:var(--ff-mono); font-size:.62rem; color:var(--text-faint)
   height: 100%;
   background: var(--bg-page);
 }
+
+/* ── Three.js evaluation panel ─────────────────────────────────────────────
+   Right-side panel for judging 3D tree composition, lighting, and airflow.
+   Transparent background — the Canvas tree shows through; 3D tree overlays.
+   Text overlay (z-index 2) stays readable above this panel (z-index 1).
+────────────────────────────────────────────────────────────────────────── */
+#three-wrap {
+  position: absolute;
+  right: 3vw;
+  top: 50%;
+  transform: translateY(-50%);
+  width: clamp(300px, 38vw, 480px);
+  aspect-ratio: 4 / 3;
+  z-index: 1;
+  border-radius: 10px;
+  border: 1px solid rgba(78, 154, 94, 0.18);
+  box-shadow: 0 2px 28px rgba(0, 0, 0, 0.06), 0 0 0 0.5px rgba(78, 154, 94, 0.08);
+  overflow: hidden;
+  pointer-events: none;
+}
+#three-wrap canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+#three-label {
+  position: absolute;
+  bottom: 9px;
+  right: 11px;
+  font-family: var(--ff-mono);
+  font-size: 7px;
+  letter-spacing: 0.14em;
+  color: rgba(78, 154, 94, 0.32);
+  pointer-events: none;
+  user-select: none;
+}
+@media (max-width: 860px) {
+  #three-wrap { display: none; }
+}
+
 #tree-text-overlay {
   position: absolute;
   inset: 0;
