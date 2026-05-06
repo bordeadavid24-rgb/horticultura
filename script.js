@@ -12,7 +12,7 @@ document.addEventListener('mousemove', e => {
   ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
   requestAnimationFrame(animRing);
 })();
-document.querySelectorAll('a,button,.pcard,.icard,.hstat,.tphase').forEach(el => {
+document.querySelectorAll('a,button,.pcard,.icard,.hstat,.tphase,#three-wrap').forEach(el => {
   el.addEventListener('mouseenter', () => { cur.style.width = '18px'; cur.style.height = '18px'; ring.style.width = '54px'; ring.style.height = '54px'; });
   el.addEventListener('mouseleave', () => { cur.style.width = '10px'; cur.style.height = '10px'; ring.style.width = '38px'; ring.style.height = '38px'; });
 });
@@ -251,8 +251,9 @@ function swMap(which, btn) {
      Remove this block + #three-canvas in index.html to fully revert.
   ─────────────────────────────────────────────────────────────────────────── */
   const threeCanvas = document.getElementById('three-canvas');
-  let threeRenderer, threeScene, threeCamera, threeTrunk, threeBranches, threeLeaves;
-  let threeFlow, flowGeo, flowData;
+  let threeRenderer, threeScene, threeCamera, threeTrunk, threeBranches, threeLeaves, treeGroup;
+  let threeFlow, flowGeo, flowData, groundShadow, cityGroup;
+  let treeBeech = null;  // GLTF model; replaces procedural tree once loaded
   const FLOW_N = 32;
 
   // Identical LCG to Canvas rng() — separate seed so Canvas RNG is unaffected
@@ -289,31 +290,48 @@ function swMap(which, btn) {
   }
 
   (function initThree() {
-    const W3 = 480, H3 = 360;
+    const _wrap = threeCanvas.parentElement;           // #three-wrap
+    const _iW   = _wrap.clientWidth  || 480;
+    const _iH   = _wrap.clientHeight || 360;
     threeRenderer = new THREE.WebGLRenderer({ canvas: threeCanvas, alpha: true, antialias: true });
-    // updateStyle:false — CSS owns display size; buffer stays at W3×H3
-    threeRenderer.setSize(W3, H3, false);
+    // Cap at 2× — keeps frame time sane on 3× mobile screens once full-screen is enabled.
+    threeRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    // updateStyle:false — CSS controls display via #three-wrap canvas { width/height 100% }
+    threeRenderer.setSize(_iW, _iH, false);
     threeRenderer.setClearColor(0x000000, 0);
+    // sRGBEncoding: GLTF base-color textures are sRGB; this adds the correct
+    // linear→sRGB gamma ramp on output so they render at intended brightness.
+    threeRenderer.outputEncoding    = THREE.sRGBEncoding;
+    threeRenderer.toneMapping       = THREE.ACESFilmicToneMapping;
+    threeRenderer.toneMappingExposure = 1.2;
 
     threeScene = new THREE.Scene();
     // Fog color matches page background (rgb 245,243,238 ≈ 0xf5f3ee); linear, starts
     // just in front of tree so depth Z-layers fade naturally toward far end
-    threeScene.fog = new THREE.Fog(0xf2f0ea, 4.0, 8.0);
+    threeScene.fog = new THREE.Fog(0xd8e6f0, 3.2, 7.5);
+    // Group holds all tree geometry — scale reveal applied here each frame.
+    // Lights stay in threeScene so they are unaffected by group scale.
+    treeGroup = new THREE.Group();
+    // Push the whole group down so its base (local Y=0) lands at world Y=−0.4.
+    // This aligns the 3D trunk base with the 2D canvas ground line (gY = H*0.71).
+    // Scaling in renderThree() pivots around the group origin, so the base stays
+    // fixed at −0.4 through the entire sapling→full-tree growth arc.
+    treeGroup.position.y = -0.4;
 
-    threeCamera = new THREE.PerspectiveCamera(48, W3 / H3, 0.1, 100);
-    threeCamera.position.set(0, 0.5, 4.5);
-    threeCamera.lookAt(0, 0.2, 0);
+    threeCamera = new THREE.PerspectiveCamera(48, _iW / _iH, 0.1, 100);
+    threeCamera.position.set(0, 0.5, 5.2);
+    threeCamera.lookAt(0, 0.5, 0);
 
-    // Ambient: kept low so directional lights define form rather than flatten everything
-    threeScene.add(new THREE.AmbientLight(0xd4e8f0, 0.18));
+    // Ambient: raised so GLTF shadow areas are readable; directionals still define form
+    threeScene.add(new THREE.AmbientLight(0xd8ecd0, 0.50));
 
     // Key light — warm, upper-left-front; primary source of highlights on branches
-    const keyLight = new THREE.DirectionalLight(0xfff0d0, 1.10);
+    const keyLight = new THREE.DirectionalLight(0xfff4d8, 1.30);
     keyLight.position.set(-2.0, 4.0, 2.0);
     threeScene.add(keyLight);
 
     // Fill light — cool, from right at mid-height; softens key-side shadows
-    const fillLight = new THREE.DirectionalLight(0xb8d4f0, 0.38);
+    const fillLight = new THREE.DirectionalLight(0xbcdaf0, 0.52);
     fillLight.position.set(2.8, 0.8, 1.5);
     threeScene.add(fillLight);
 
@@ -326,7 +344,7 @@ function swMap(which, btn) {
     const trunkGeo = new THREE.CylinderGeometry(0.06, 0.14, 2.2, 7);
     threeTrunk = new THREE.Mesh(trunkGeo, new THREE.MeshStandardMaterial({ color: 0x6e5030, roughness: 0.90 }));
     threeTrunk.position.y = -0.3;
-    threeScene.add(threeTrunk);
+    treeGroup.add(threeTrunk);
 
     // Branches — white base so instance colors are not tinted (same as leaves)
     const branchGeo = new THREE.CylinderGeometry(0.5, 0.5, 1, 6);
@@ -337,7 +355,7 @@ function swMap(which, btn) {
     // from the first frame. Without this, the shader is compiled while instanceColor
     // is null (branchProg=0 at load), and later setColorAt calls are silently ignored.
     threeBranches.setColorAt(0, _colTrunk);
-    threeScene.add(threeBranches);
+    treeGroup.add(threeBranches);
 
     // Leaves — white base so instance colors are not tinted; leaf-shaped geometry
     const leafGeo = makeLeafGeo();
@@ -346,7 +364,7 @@ function swMap(which, btn) {
     threeLeaves.count = 0;
     // Same pre-init for leaves — forces instance color path in shader from first compile.
     threeLeaves.setColorAt(0, _colLeafA);
-    threeScene.add(threeLeaves);
+    treeGroup.add(threeLeaves);
 
     // Airflow wisps — 4 pts per wisp (left, mid, mid, right) so LineSegments draws
     // two connected sub-segments whose midpoint can arc independently.
@@ -355,9 +373,9 @@ function swMap(which, btn) {
     flowGeo = new THREE.BufferGeometry();
     flowGeo.setAttribute('position', new THREE.BufferAttribute(flowBuf, 3));
     threeFlow = new THREE.LineSegments(flowGeo, new THREE.LineBasicMaterial({
-      color: 0xaaccb8, opacity: 0.07, transparent: true, fog: true, depthWrite: false
+      color: 0xaaccb8, opacity: 0.11, transparent: true, fog: true, depthWrite: false
     }));
-    threeScene.add(threeFlow);
+    treeGroup.add(threeFlow);
 
     // Wisp properties — one seeded LCG run at init, never touched again.
     // First 62% are canopy-biased (Y ∈ [0.1, 1.4]) for density near leaf clusters.
@@ -375,6 +393,191 @@ function swMap(which, btn) {
       vy:       0.02  + fRng() * 0.04,   // vertical undulation amplitude
       vFreq:    0.25  + fRng() * 0.30,   // undulation frequency, rad/s
     }));
+
+    // Contact shadow — soft radial blob at world Y=−0.38 (2 cm above trunk base).
+    // Not in treeGroup: its world position is fixed; scale is driven per-frame.
+    // Canvas texture bakes the radial gradient so no per-frame gradient computation.
+    (function() {
+      const sc = document.createElement('canvas');
+      sc.width = sc.height = 128;
+      const sx = sc.getContext('2d');
+      const gr = sx.createRadialGradient(64, 64, 0, 64, 64, 60);
+      gr.addColorStop(0,    'rgba(28,20,8,0.22)');
+      gr.addColorStop(0.50, 'rgba(28,20,8,0.09)');
+      gr.addColorStop(1,    'rgba(28,20,8,0)');
+      sx.fillStyle = gr;
+      sx.fillRect(0, 0, 128, 128);
+      groundShadow = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.9, 0.9),
+        new THREE.MeshBasicMaterial({
+          map: new THREE.CanvasTexture(sc),
+          transparent: true,
+          depthWrite: false
+        })
+      );
+      groundShadow.rotation.x = -Math.PI / 2;
+      groundShadow.position.y = -0.38;
+      threeScene.add(groundShadow);
+    })();
+
+    threeScene.add(treeGroup);
+  })();
+
+  threeCanvas.parentElement.classList.add('three-promoted');
+
+  // ── PHASE 4E: 3D CITY GROUP ──────────────────────────────────────────────────
+  // 18 BoxGeometry buildings placed in threeScene (not treeGroup) so they stay
+  // at world scale while the tree group scales up with scroll progress.
+  // ~216 triangles total — trivial GPU cost alongside existing branch/leaf meshes.
+  // Revert instantly: cityGroup.visible = false, or remove threeScene.add(cityGroup).
+  (function buildCity3D() {
+    cityGroup = new THREE.Group();
+    const GY = -0.40; // world-space ground = treeGroup.position.y
+
+    // [x, z, width, height, depth, colorHex]
+    // Placed in a ring around the tree (radius 2.5–7 units). Fog (near 3.2,
+    // far 7.5 from camera) dissolves distant rows into atmospheric silhouettes.
+    // Colors: soft blue-gray palette, 3–4 variants, roughness 0.92 (matte).
+    const DEFS = [
+      // Left wing — mid-distance
+      [-3.5, -2.0, 0.70, 1.50, 0.75, 0xc8ccd4],
+      [-4.2, -0.6, 0.55, 1.05, 0.60, 0xcacec8],
+      [-2.8, -3.2, 0.85, 2.00, 0.70, 0xbfc4ce],
+      [-5.2, -1.8, 0.60, 1.30, 0.55, 0xc2c7d0],
+      [-3.2, -4.5, 0.75, 0.85, 0.80, 0xbdc2cb],
+      // Right wing — mid-distance
+      [ 3.3, -2.0, 0.70, 1.75, 0.75, 0xc5cad2],
+      [ 4.0, -0.6, 0.55, 1.10, 0.60, 0xcbcfc6],
+      [ 2.7, -3.2, 0.85, 1.55, 0.70, 0xbec3cd],
+      [ 5.0, -1.8, 0.60, 1.00, 0.55, 0xc0c6cf],
+      [ 3.8, -4.5, 0.80, 2.20, 0.85, 0xbac0ca],
+      // Center background — tall silhouettes deep in fog
+      [-0.5, -4.5, 1.10, 2.50, 0.95, 0xbec5ce],
+      [ 1.2, -5.2, 0.85, 1.80, 0.80, 0xb9c0c9],
+      [-1.8, -5.5, 0.95, 1.20, 0.75, 0xb6bdc6],
+      [ 0.3, -6.5, 0.70, 1.40, 0.70, 0xb3bac3],
+      // Far flanking sides — visible during the overhead orbit
+      [-5.5, -3.5, 0.65, 0.90, 0.60, 0xbdc3cc],
+      [ 5.5, -3.5, 0.60, 1.15, 0.65, 0xbbc2cb],
+      [-6.5,  0.5, 0.60, 0.95, 0.55, 0xc5c9c3],
+      [ 6.0,  0.5, 0.65, 1.25, 0.60, 0xc3c8c4],
+    ];
+
+    DEFS.forEach(function(def) {
+      const geo  = new THREE.BoxGeometry(def[2], def[3], def[4]);
+      const mat  = new THREE.MeshStandardMaterial({ color: def[5], roughness: 0.92 });
+      const mesh = new THREE.Mesh(geo, mat);
+      // Base at world ground; center geometry at half-height above ground
+      mesh.position.set(def[0], GY + def[3] * 0.5, def[1]);
+      cityGroup.add(mesh);
+    });
+
+    threeScene.add(cityGroup);
+  })();
+
+  // ── Three.js resize handler ─────────────────────────────────────────────────
+  // Keeps buffer dimensions and camera aspect in sync with #three-wrap whenever
+  // its layout box changes. ResizeObserver is preferred over window.resize because
+  // it fires for container-driven changes too (future full-screen promotion, flex
+  // layout shifts, etc.). setPixelRatio was capped at 2 in initThree; setSize
+  // respects that stored cap on every subsequent call — no explicit multiply needed.
+  {
+    const _rWrap = threeCanvas.parentElement;
+    const _onThreeResize = function() {
+      const w = _rWrap.clientWidth;
+      const h = _rWrap.clientHeight;
+      if (!w || !h) return;
+      threeRenderer.setSize(w, h, false);
+      threeCamera.aspect = w / h;
+      threeCamera.updateProjectionMatrix();
+    };
+    if (typeof ResizeObserver !== 'undefined') {
+      new ResizeObserver(_onThreeResize).observe(_rWrap);
+    } else {
+      window.addEventListener('resize', _onThreeResize);
+    }
+  }
+
+  // ── BEECH TREE GLTF LOADER ──────────────────────────────────────────────────
+  // Loads assets/beech_tree/scene.gltf and positions it to match the procedural
+  // tree's ground level (Y = -0.3) and camera framing (height ~3 units).
+  // Sketchfab node matrices already encode the FBX→GLTF axis flip, so the model
+  // arrives Y-up with base at Y=0. rotation.x = 0 (no correction needed).
+  (function loadBeech() {
+    if (location.protocol === 'file:') {
+      console.warn(
+        '[BioAir] GLTF assets cannot load over file://. Run via a local server:\n' +
+        '  VS Code  → right-click index.html → "Open with Live Server"\n' +
+        '  Python   → python -m http.server   then open http://localhost:8000\n' +
+        'Procedural tree will render until a server is used.'
+      );
+      return;
+    }
+    if (typeof THREE.GLTFLoader !== 'function') {
+      console.warn('[BioAir] THREE.GLTFLoader not available — GLTFLoader script may not have loaded. Procedural fallback active.');
+      return;
+    }
+    const loader = new THREE.GLTFLoader();
+    loader.load('assets/beech_tree/scene.gltf', function(gltf) {
+      const model = gltf.scene;
+
+      // Sketchfab node matrices already encode the FBX→GLTF axis conversion,
+      // leaving the tree Y-up with base at Y=0. No additional rotation needed.
+      model.rotation.x = 0;
+      model.updateMatrixWorld(true);
+
+      // Measure the corrected model.
+      const box = new THREE.Box3().setFromObject(model);
+      const size = new THREE.Vector3();
+      box.getSize(size);
+
+      // Scale so the tallest dimension is 2.7 units — sized for close camera framing.
+      const sf = 2.7 / Math.max(size.x, size.y, size.z);
+      model.scale.setScalar(sf);
+      model.updateMatrixWorld(true);
+
+      // Center X/Z at origin; base at Y = 0 so treeGroup scale-growth stays
+      // grounded — scaling around Y=0 keeps the trunk base fixed at world Y=0.
+      const box2 = new THREE.Box3().setFromObject(model);
+      const c = new THREE.Vector3();
+      box2.getCenter(c);
+      model.position.x = -c.x;
+      model.position.z = -c.z;
+      model.position.y = -box2.min.y;
+
+      // Brighten leaf and bark materials after load.
+      // Leaf detection: green-dominant color or name match.
+      // emissive adds a small self-lit boost so deep shade areas stay readable.
+      model.traverse(function(child) {
+        if (!child.isMesh || !child.material) return;
+        const mats = Array.isArray(child.material) ? child.material : [child.material];
+        mats.forEach(function(mat) {
+          if (!mat.isMeshStandardMaterial && !mat.isMeshPhysicalMaterial) return;
+          const mc = mat.color;
+          const isLeafy = (mat.name && /leaf|leave|foliage|canopy|frond/i.test(mat.name)) ||
+                          (mc.g > mc.r * 1.15 && mc.g > mc.b * 1.10);
+          if (isLeafy) {
+            mat.roughness         = Math.max(0.28, (mat.roughness != null ? mat.roughness : 0.85) - 0.22);
+            mat.emissive          = new THREE.Color(0x1f4812);
+            mat.emissiveIntensity = 0.16;
+          } else {
+            mat.emissive          = new THREE.Color(0x0c0805);
+            mat.emissiveIntensity = 0.07;
+          }
+          mat.needsUpdate = true;
+        });
+      });
+
+      treeBeech = model;
+      treeGroup.add(model);
+
+      // Disable procedural geometry — preserved in code, just not rendered.
+      threeTrunk.visible    = false;
+      threeBranches.visible = false;
+      threeLeaves.visible   = false;
+    }, undefined, function(err) {
+      console.warn('beech_tree load error (falling back to procedural):', err);
+    });
   })();
 
   // Mirrors Canvas drawBranch() recursion exactly.
@@ -415,8 +618,10 @@ function swMap(which, btn) {
     const midX  = (x1 + x2) * 0.5 + perpX;
     const midY  = (y1 + y2) * 0.5 + perpY;
 
-    // Trunk forward, tips back — wider range gives fog a stronger depth gradient
-    const zOff = (0.5 - depth / maxD) * 0.35;
+    // Root branches anchored at z=0 (trunk centre); tips pushed back for fog gradient.
+    // Old formula put depth-0 at z=+0.175, outside trunk tip radius (0.06) — caused
+    // visible floating gap when viewed from side angles.
+    const zOff = lerp(0.0, -0.28, depth / maxD);
     let sa, sl;
 
     // First half: x1 → mid
@@ -476,7 +681,7 @@ function swMap(which, btn) {
         // Z rotation centered on branch direction with ±34° spread
         ld.branchAngle = angle - Math.PI * 0.5 + (rng3D() - 0.5) * 1.2;
         // Static per-leaf X tilt for 3D depth — so leaves face different angles
-        ld.tiltX      = (rng3D() - 0.5) * 0.65;
+        ld.tiltX      = (rng3D() - 0.5) * 1.0;
         ld.scaleV     = 0.55 + rng3D() * 0.50;  // 0.55–1.05, smaller outer leaves
         ld.cg         = rng3D();
         ld.z          = (0.5 - depth / maxD) * 0.35 + (rng3D() - 0.5) * 0.08;
@@ -486,73 +691,58 @@ function swMap(which, btn) {
   }
 
   function renderThree(sim) {
-    threeTrunk.scale.y = 0.05 + sim.trunkGrowth * 0.95;
-    threeTrunk.scale.x = 0.4 + sim.trunkWeight * 0.6;
-    threeTrunk.scale.z = 0.4 + sim.trunkWeight * 0.6;
-    const trunkTop = -0.3 + 1.1 * threeTrunk.scale.y;
+    if (!treeBeech) {
+      // ── Procedural tree — active only before GLTF model loads ──────────────
+      threeTrunk.scale.y = 0.05 + sim.trunkGrowth * 0.95;
+      threeTrunk.scale.x = 0.4 + sim.trunkWeight * 0.6;
+      threeTrunk.scale.z = 0.4 + sim.trunkWeight * 0.6;
+      const trunkTop = -0.3 + 1.1 * threeTrunk.scale.y;
 
-    branchSegCount = 0;
-    leafInstCount  = 0;
-    if (sim.branchProg > 0) {
-      const bLen = lerp(0.1, 0.9, sim.branchScale);
-      rng3DSeed = 42;
-      buildBranches3D(0, trunkTop, Math.PI / 2 + 0.44 + sim.swayL, bLen, 0, sim.branchDepth, sim.branchProg);
-      rng3DSeed = 84;
-      buildBranches3D(0, trunkTop, Math.PI / 2 - 0.44 + sim.swayR, bLen, 0, sim.branchDepth, sim.branchProg);
+      branchSegCount = 0;
+      leafInstCount  = 0;
+      if (sim.branchProg > 0) {
+        const bLen = lerp(0.1, 0.9, sim.branchScale);
+        rng3DSeed = 42;
+        buildBranches3D(0, trunkTop, Math.PI / 2 + 0.44 + sim.swayL, bLen, 0, sim.branchDepth, sim.branchProg);
+        rng3DSeed = 84;
+        buildBranches3D(0, trunkTop, Math.PI / 2 - 0.44 + sim.swayR, bLen, 0, sim.branchDepth, sim.branchProg);
+      }
+
+      threeBranches.count = branchSegCount;
+      threeBranches.instanceMatrix.needsUpdate = true;
+      if (threeBranches.instanceColor) threeBranches.instanceColor.needsUpdate = true;
+
+      threeLeaves.count = leafInstCount;
+
+      const afTime = sim.t * 0.055;
+      const afX    = 0.022 + 0.010 * Math.sin(afTime);
+      const afY    = 0.010 + 0.005 * Math.sin(afTime * 1.41 + 0.6);
+      const waveT  = sim.t * 0.38;
+
+      for (let i = 0; i < leafInstCount; i++) {
+        const ld   = _leafData[i];
+        const flt  = 0.009 * Math.sin(sim.t * 2.3 + ld.phase);
+        const fltY = 0.006 * Math.sin(sim.t * 1.7 + ld.phase + 1.1);
+        const react = 1.25 - (ld.scaleV - 0.55) * 1.0;
+        const wave  = Math.sin(waveT - ld.x * 3.0 + ld.phase * 0.15);
+        const dispX = (afX + wave * 0.014) * react;
+        const dispY = (afY + wave * 0.007) * react;
+        _obj.position.set(ld.x + dispX + flt, ld.y + dispY + fltY, ld.z + flt * 0.5);
+        const tiltY = 0.12 * react;
+        const tiltX = 0.10 * wave * react + 0.28 * Math.sin(ld.phase);
+        _obj.rotation.set(tiltX + ld.tiltX, tiltY, ld.branchAngle + flt * 4);
+        _obj.scale.setScalar(0.044 * ld.scaleV);
+        _obj.updateMatrix();
+        threeLeaves.setMatrixAt(i, _obj.matrix);
+        _leafCol.lerpColors(_colLeafA, _colLeafB, ld.cg);
+        threeLeaves.setColorAt(i, _leafCol);
+      }
+      threeLeaves.instanceMatrix.needsUpdate = true;
+      if (threeLeaves.instanceColor) threeLeaves.instanceColor.needsUpdate = true;
+    } else {
+      // ── GLTF beech sway — driven by the same swayL signal as the 2D canvas ─
+      treeBeech.rotation.z = sim.swayL * 0.4;
     }
-
-    threeBranches.count = branchSegCount;
-    threeBranches.instanceMatrix.needsUpdate = true;
-    if (threeBranches.instanceColor) threeBranches.instanceColor.needsUpdate = true;
-
-    // Animate leaf instances — positions set during branch traversal, airflow + flutter added here
-    threeLeaves.count = leafInstCount;
-
-    // Global airflow vector — slow drift, +X bias with slight upward lift
-    const afTime = sim.t * 0.055;
-    const afX    = 0.022 + 0.010 * Math.sin(afTime);
-    const afY    = 0.010 + 0.005 * Math.sin(afTime * 1.41 + 0.6);
-    // Canopy wave — same base frequency for all leaves; ld.x shifts phase so
-    // the wave travels in the wind direction (+X) rather than pulsing uniformly
-    const waveT  = sim.t * 0.38;
-
-    for (let i = 0; i < leafInstCount; i++) {
-      const ld   = _leafData[i];
-
-      // Existing flutter — kept as secondary, high-frequency motion
-      const flt  = 0.009 * Math.sin(sim.t * 2.3 + ld.phase);
-      const fltY = 0.006 * Math.sin(sim.t * 1.7 + ld.phase + 1.1);
-
-      // Depth-based reactivity: scaleV 0.55–1.05 → react 1.25–0.75
-      // Smaller (outer) leaves swing more; larger (inner) leaves are damped
-      const react = 1.25 - (ld.scaleV - 0.55) * 1.0;
-
-      // Traveling wave: spatial phase from ld.x makes the wave propagate +X
-      // through canopy; ld.phase * 0.15 adds per-leaf variation without
-      // breaking the group coherence
-      const wave  = Math.sin(waveT - ld.x * 3.0 + ld.phase * 0.15);
-
-      // Airflow displacement — added to base position, never overrides it
-      const dispX = (afX + wave * 0.014) * react;
-      const dispY = (afY + wave * 0.007) * react;
-
-      _obj.position.set(ld.x + dispX + flt, ld.y + dispY + fltY, ld.z + flt * 0.5);
-
-      // Rotation: permanent Y-axis lean into wind + wave nod on X-axis
-      // ld.phase static tilt preserved from original; flt*6 flutter on Z preserved
-      const tiltY = 0.12 * react;
-      const tiltX = 0.10 * wave * react + 0.28 * Math.sin(ld.phase);
-      // tiltX: dynamic airflow lean + ld.tiltX static per-leaf 3D orientation
-      _obj.rotation.set(tiltX + ld.tiltX, tiltY, ld.branchAngle + flt * 4);
-
-      _obj.scale.setScalar(0.044 * ld.scaleV);
-      _obj.updateMatrix();
-      threeLeaves.setMatrixAt(i, _obj.matrix);
-      _leafCol.lerpColors(_colLeafA, _colLeafB, ld.cg);
-      threeLeaves.setColorAt(i, _leafCol);
-    }
-    threeLeaves.instanceMatrix.needsUpdate = true;
-    if (threeLeaves.instanceColor) threeLeaves.instanceColor.needsUpdate = true;
 
     // Update airflow wisps — two sub-segments per wisp (left→mid, mid→right).
     // The midpoint arcs upward inside the canopy X zone, simulating flow deflected
@@ -586,6 +776,47 @@ function swMap(which, btn) {
       _fp[b +  9] = xr;  _fp[b + 10] = yR;  _fp[b + 11] = fd.z;  // right
     }
     flowGeo.attributes.position.needsUpdate = true;
+
+    // Scroll-driven orbital camera — ~1.25 turn orbit, sculpted Y for overhead shot.
+    // Phase 0 (p 0.00→0.22): entry low and wide, sapling grows from ground.
+    // Phase 1 (p 0.22→0.52): rise to overhead canopy view (camY peaks at 5.0).
+    // Phase 2 (p 0.52→0.72): descend from overhead, pulling back to r=5.0.
+    // Phase 3 (p 0.72→1.00): settle low at r=5.0 so full tree fits the frame.
+    // Radii at phase boundaries: P0→P1 4.5, P1→P2 4.2, P2→P3 5.0 (no jumps).
+    const scrollAngle = -0.3 + sim.p * Math.PI * 2.5;
+    let camRadius, camY, lookY;
+    if (sim.p < 0.22) {
+      const t3 = sim.p / 0.22;
+      camRadius = lerp(4.8, 3.9, easeOut(t3));
+      camY      = lerp(0.5, 0.3, easeOut(t3));
+      lookY     = lerp(0.5, 1.1, easeOut(t3));
+    } else if (sim.p < 0.52) {
+      const t3 = (sim.p - 0.22) / 0.30;
+      camRadius = lerp(3.9, 3.6, easeInOut(t3));
+      camY      = lerp(0.3, 4.5, easeInOut(t3));
+      lookY     = lerp(1.1, 1.4, easeInOut(t3));
+    } else if (sim.p < 0.72) {
+      const t3 = (sim.p - 0.52) / 0.20;
+      camRadius = lerp(3.6, 4.4, easeOut(t3));
+      camY      = lerp(4.5, 1.0, easeOut(t3));
+      lookY     = lerp(1.4, 1.0, easeOut(t3));
+    } else {
+      const t3 = (sim.p - 0.72) / 0.28;
+      camRadius = 4.4;
+      camY      = lerp(1.0, 0.4, easeOut(t3));
+      lookY     = 1.0;
+    }
+    // Tree fills the frame as the hero: scale 1.05 (was 0.80), camera ~15% tighter.
+    treeGroup.scale.setScalar(lerp(0.12, 1.05, easeOut(Math.min(1, sim.p * 1.5))));
+    threeCamera.position.x = Math.sin(scrollAngle) * camRadius;
+    threeCamera.position.y = camY;
+    threeCamera.position.z = Math.cos(scrollAngle) * camRadius;
+    threeCamera.lookAt(0, lookY, 0);
+    threeCanvas.parentElement.style.opacity = (0.30 + easeOut(Math.min(1, sim.p * 4)) * 0.70).toFixed(3);
+
+    // Scale contact shadow with tree growth — footprint tracks treeGroup size.
+    const _gs = treeGroup.scale.x;
+    groundShadow.scale.set(_gs, 1, _gs);
 
     threeRenderer.render(threeScene, threeCamera);
   }
@@ -641,57 +872,163 @@ function swMap(which, btn) {
   function drawSky(sim) {
     const { p, pollution, cleanGlow } = sim;
     const W = canvas.width, H = canvas.height;
-    const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, `rgb(${Math.round(lerp(246,238,p))},${Math.round(lerp(243,247,p))},${Math.round(lerp(238,238,p))})`);
-    g.addColorStop(1, `rgb(${Math.round(lerp(238,228,p))},${Math.round(lerp(235,242,p))},${Math.round(lerp(228,232,p))})`);
+
+    // Overhead-phase factor: sky opens as camera lifts above canopy (p 0.22→0.72)
+    const ovhd = Math.max(0, Math.min(1,
+      p < 0.30 ? (p - 0.22) / 0.08 :
+      p < 0.55 ? 1.0 :
+      (0.72 - p) / 0.17
+    ));
+
+    // Sky gradient: soft blue-gray top → warm ivory mid → cream base.
+    // Blue tint strengthens gently as scene cleans and overhead phase activates.
+    const g = ctx.createLinearGradient(0, 0, 0, H * 0.82);
+    g.addColorStop(0,
+      `rgb(${Math.round(lerp(lerp(215,205,p), 200, ovhd * 0.30))},` +
+      `${Math.round(lerp(lerp(228,232,p), 218, ovhd * 0.22))},` +
+      `${Math.round(lerp(lerp(246,255,p), 238, ovhd * 0.22))})`
+    );
+    g.addColorStop(0.42,
+      `rgb(${Math.round(lerp(240,234,p))},${Math.round(lerp(239,244,p))},${Math.round(lerp(235,239,p))})`
+    );
+    g.addColorStop(1,
+      `rgb(${Math.round(lerp(238,228,p))},${Math.round(lerp(235,242,p))},${Math.round(lerp(228,232,p))})`
+    );
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
+
+    // Warm sunlight bloom — upper-right, soft gold, diffused morning light
+    const sunA = 0.046 + cleanGlow * 0.028;
+    const sunR = ctx.createRadialGradient(W * 0.74, H * 0.05, 0, W * 0.74, H * 0.05, W * 0.44);
+    sunR.addColorStop(0,    `rgba(255,240,195,${sunA})`);
+    sunR.addColorStop(0.50, `rgba(255,230,165,${sunA * 0.30})`);
+    sunR.addColorStop(1,    'transparent');
+    ctx.fillStyle = sunR;
+    ctx.fillRect(0, 0, W, H * 0.62);
+
+    // Pollution haze (unchanged)
     if (pollution > 0.01) {
       const haze = ctx.createRadialGradient(W * .5, H * .38, 0, W * .5, H * .38, W * .55);
       haze.addColorStop(0, `rgba(195,175,130,${pollution * 0.10})`);
       haze.addColorStop(1, 'transparent');
       ctx.fillStyle = haze; ctx.fillRect(0, 0, W, H);
     }
+
+    // Clean glow (unchanged) + green ground haze that emerges with tree growth
     if (cleanGlow > 0.01) {
       const cg = ctx.createRadialGradient(W * .5, H * .3, 0, W * .5, H * .3, W * .4);
       cg.addColorStop(0, `rgba(110,185,135,${cleanGlow * 0.07})`);
       cg.addColorStop(1, 'transparent');
       ctx.fillStyle = cg; ctx.fillRect(0, 0, W, H);
+
+      // Green ground haze — botanical atmosphere near base, gentle and warm
+      const gh = ctx.createLinearGradient(0, H * 0.68, 0, H);
+      gh.addColorStop(0, 'transparent');
+      gh.addColorStop(1, `rgba(100,175,120,${cleanGlow * 0.07})`);
+      ctx.fillStyle = gh;
+      ctx.fillRect(0, H * 0.68, W, H * 0.32);
     }
   }
 
-  function drawCity(sim) {
-    const { greenTint, vegProg, groundGreen, roadAlpha } = sim;
+  function drawClouds(sim) {
+    const { p } = sim;
     const W = canvas.width, H = canvas.height;
-    const gY = H * 0.71;
-    const buildings = [
-      { x: .03, w: .07, h: .22 }, { x: .11, w: .05, h: .15 }, { x: .17, w: .09, h: .30 },
-      { x: .27, w: .05, h: .17 }, { x: .63, w: .06, h: .21 }, { x: .70, w: .09, h: .33 },
-      { x: .80, w: .06, h: .17 }, { x: .87, w: .07, h: .25 }, { x: .94, w: .06, h: .14 },
+    const drift = p * W * 0.04;
+
+    // Each cloud is a cluster of overlapping lobes: [relX, relY, radiusScale, alphaScale]
+    // relX/relY are multiples of baseR from the cloud centre.
+    // Lobes overlap and blend to form an irregular, non-circular silhouette.
+    const CLOUDS = [
+      { cx: W * 0.17, cy: H * 0.092, df: 1.00, baseR: W * 0.072, baseA: 0.46,
+        lobes: [[0,0,1,.10],[.55,.08,.80,.08],[-.48,.10,.72,.07],[1.10,.20,.60,.06],[-.90,.18,.55,.06],[.25,-.28,.50,.05],[-.20,-.24,.44,.04]] },
+      { cx: W * 0.52, cy: H * 0.060, df: 0.65, baseR: W * 0.088, baseA: 0.40,
+        lobes: [[0,0,1,.10],[.52,.10,.84,.08],[-.46,.12,.76,.08],[1.05,.22,.66,.07],[-.92,.20,.60,.06],[.28,-.26,.52,.05],[-.22,-.22,.46,.04],[.78,-.14,.45,.04]] },
+      { cx: W * 0.83, cy: H * 0.108, df: 0.38, baseR: W * 0.060, baseA: 0.44,
+        lobes: [[0,0,1,.10],[.54,.07,.76,.08],[-.44,.09,.68,.07],[1.08,.18,.58,.06],[.26,-.25,.48,.05]] },
     ];
-    buildings.forEach(b => {
-      const bx = b.x * W, bw = b.w * W, bh = b.h * H, by = gY - b.h * H;
-      ctx.fillStyle = `rgb(${Math.round(lerp(198,188,greenTint))},${Math.round(lerp(195,208,greenTint))},${Math.round(lerp(190,196,greenTint))})`;
-      ctx.fillRect(bx, by, bw, bh);
-      ctx.fillStyle = `rgba(120,170,140,0.06)`;
-      const wW = bw * .22, wH = bh * .07;
-      for (let r = 0; r < 5; r++) for (let c = 0; c < 2; c++)
-        ctx.fillRect(bx + bw * .15 + c * bw * .38, by + bh * .1 + r * bh * .13, wW, wH);
-      if (greenTint > .25) {
-        ctx.fillStyle = `rgba(100,170,120,${vegProg * .22})`;
-        ctx.fillRect(bx, by, bw * vegProg * .5, bh * .25);
-        ctx.fillRect(bx, gY - bh * .12, bw, bh * .12 * vegProg);
-      }
+
+    CLOUDS.forEach(({ cx, cy, df, baseR, baseA, lobes }) => {
+      const ox = cx - drift * df;
+      lobes.forEach(([dx, dy, rs, as]) => {
+        const lx = ox + dx * baseR;
+        const ly = cy  + dy * baseR;
+        const r  = baseR * rs;
+        const a  = baseA * as * 10; // as stored as 0.10 = 1.0× relative weight
+        const g  = ctx.createRadialGradient(lx, ly, 0, lx, ly, r);
+        g.addColorStop(0,    `rgba(255,255,255,${+a.toFixed(2)})`);
+        g.addColorStop(0.40, `rgba(250,253,255,${+(a * 0.55).toFixed(2)})`);
+        g.addColorStop(0.75, `rgba(238,246,255,${+(a * 0.14).toFixed(2)})`);
+        g.addColorStop(1,    'transparent');
+        ctx.save();
+        ctx.translate(lx, ly);
+        ctx.scale(1, 0.52);   // flatten vertically — natural cloud aspect ratio
+        ctx.translate(-lx, -ly);
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(lx, ly, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
     });
+  }
+
+  function drawCity(sim) {
+    const { greenTint, vegProg, groundGreen, roadAlpha, p } = sim;
+    const W = canvas.width, H = canvas.height;
+    // Mirror renderThree camY piecewise formula — same math, no simulate() change needed
+    let _cY;
+    if (p < 0.22)      _cY = lerp(0.5, 0.3, easeOut(p / 0.22));
+    else if (p < 0.52) _cY = lerp(0.3, 4.5, easeInOut((p - 0.22) / 0.30));
+    else if (p < 0.72) _cY = lerp(4.5, 1.0, easeOut((p - 0.52) / 0.20));
+    else               _cY = lerp(1.0, 0.4, easeOut((p - 0.72) / 0.28));
+    const camYNorm = _cY / 4.5; // 0 = eye-level, 1 = full overhead
+    // Horizon drops as camera rises: overhead view reveals more ground plane
+    const gY = H * (0.71 + camYNorm * 0.034);
+    const camAngle = -0.3 + p * Math.PI * 2.5;
+    const pxShift  = -Math.sin(camAngle) * W * 0.035;
+    // 2D buildings suppressed when Three.js is active — 3D cityGroup replaces them.
+    // Canvas sky, ground, road, and horizon haze remain regardless (below this block).
+    if (!threeRenderer) {
+      const buildings = [
+        { x: .03, w: .07, h: .22 }, { x: .11, w: .05, h: .15 }, { x: .17, w: .09, h: .30 },
+        { x: .27, w: .05, h: .17 }, { x: .63, w: .06, h: .21 }, { x: .70, w: .09, h: .33 },
+        { x: .80, w: .06, h: .17 }, { x: .87, w: .07, h: .25 }, { x: .94, w: .06, h: .14 },
+      ];
+      buildings.forEach(b => {
+        // Depth-based vertical drift: shorter/farther buildings drift up more as camera rises
+        const depthDrift = lerp(0, camYNorm * H * 0.022, 1 - b.h / 0.33);
+        const bx = b.x * W + pxShift, bw = b.w * W, bh = b.h * H, by = gY - b.h * H - depthDrift;
+        // Slightly cooler blue-gray base — reads as city under open sky rather than warm sandstone
+        ctx.fillStyle = `rgb(${Math.round(lerp(194,184,greenTint))},${Math.round(lerp(197,210,greenTint))},${Math.round(lerp(204,200,greenTint))})`;
+        ctx.fillRect(bx, by, bw, bh);
+        ctx.fillStyle = `rgba(120,170,140,0.06)`;
+        const wW = bw * .22, wH = bh * .07;
+        for (let r = 0; r < 5; r++) for (let c = 0; c < 2; c++)
+          ctx.fillRect(bx + bw * .15 + c * bw * .38, by + bh * .1 + r * bh * .13, wW, wH);
+        if (greenTint > .25) {
+          ctx.fillStyle = `rgba(100,170,120,${vegProg * .22})`;
+          ctx.fillRect(bx, by, bw * vegProg * .5, bh * .25);
+          ctx.fillRect(bx, gY - bh * .12, bw, bh * .12 * vegProg);
+        }
+      });
+    }
     const gg = ctx.createLinearGradient(0, gY, 0, H);
     gg.addColorStop(0, `rgb(${Math.round(lerp(222,210,groundGreen))},${Math.round(lerp(220,230,groundGreen))},${Math.round(lerp(212,215,groundGreen))})`);
     gg.addColorStop(1, `rgb(${Math.round(lerp(235,225,groundGreen))},${Math.round(lerp(232,238,groundGreen))},${Math.round(lerp(228,232,groundGreen))})`);
     ctx.fillStyle = gg; ctx.fillRect(0, gY, W, H - gY);
-    ctx.fillStyle = `rgba(185,180,172,${roadAlpha * .55})`; ctx.fillRect(W * .32, gY - 3, W * .36, 12);
+    ctx.fillStyle = `rgba(185,180,172,${roadAlpha * .55})`; ctx.fillRect(W * .32 + pxShift, gY - 3, W * .36, 12);
     for (let i = 0; i < 6; i++) {
       ctx.fillStyle = `rgba(200,175,70,${roadAlpha * .28})`;
-      ctx.fillRect(W * .335 + i * W * .052, gY + 2, W * .028, 4);
+      ctx.fillRect(W * .335 + i * W * .052 + pxShift, gY + 2, W * .028, 4);
     }
+
+    // Atmospheric horizon depth — soft blue-tinted haze at city skyline
+    // Adds spatial separation between sky and buildings, strengthens with scroll
+    const horizHaze = ctx.createLinearGradient(0, gY - H * 0.20, 0, gY - H * 0.01);
+    horizHaze.addColorStop(0, `rgba(180,210,238,${0.07 + p * 0.07})`);
+    horizHaze.addColorStop(1, 'transparent');
+    ctx.fillStyle = horizHaze;
+    ctx.fillRect(0, gY - H * 0.20, W, H * 0.20);
   }
 
   function drawMountain(sim) {
@@ -715,6 +1052,8 @@ function swMap(which, btn) {
     const { flowIntensity, flowTime } = sim;
     if (flowIntensity < .01) return;
     const W = canvas.width, H = canvas.height;
+    const camAngle  = -0.3 + sim.p * Math.PI * 2.5;
+    const axisShift = Math.sin(camAngle) * W * 0.08;
     for (let i = 0; i < 7; i++) {
       const yb = H * .2 + i * H * .058;
       const a = flowIntensity * .16 * (0.5 + 0.5 * Math.sin(flowTime + i * .9));
@@ -723,7 +1062,7 @@ function swMap(which, btn) {
       ctx.lineDashOffset = -(flowTime * 55 + i * 18) % 20;
       ctx.beginPath();
       ctx.moveTo(W * .04, yb + Math.sin(flowTime + i) * 7);
-      ctx.bezierCurveTo(W * .25, yb - 14, W * .5, yb + 9, W * .96, yb + Math.sin(flowTime + i + 1) * 5);
+      ctx.bezierCurveTo(W * .25 + axisShift * 0.4, yb - 14, W * .5 + axisShift, yb + 9, W * .96, yb + Math.sin(flowTime + i + 1) * 5);
       ctx.stroke();
     }
     ctx.setLineDash([]); ctx.lineDashOffset = 0;
@@ -772,10 +1111,12 @@ function swMap(which, btn) {
     const { corridorProg } = sim;
     if (corridorProg < .01) return;
     const W = canvas.width, H = canvas.height;
+    const camAngle    = -0.3 + sim.p * Math.PI * 2.5;
+    const treeScreenX = cx - Math.sin(camAngle) * W * 0.09;
     const corridors = [
-      { sx: cx, sy: gY * .54, ex: W * .10, ey: gY * .62, lbl: 'Parc Titulescu' },
-      { sx: cx, sy: gY * .51, ex: W * .90, ey: gY * .57, lbl: 'Parc Tractorul' },
-      { sx: cx, sy: gY * .59, ex: W * .84, ey: gY * .76, lbl: 'Parc Noua / Zoo' },
+      { sx: treeScreenX, sy: gY * .54, ex: W * .10, ey: gY * .62, lbl: 'Parc Titulescu' },
+      { sx: treeScreenX, sy: gY * .51, ex: W * .90, ey: gY * .57, lbl: 'Parc Tractorul' },
+      { sx: treeScreenX, sy: gY * .59, ex: W * .84, ey: gY * .76, lbl: 'Parc Noua / Zoo' },
     ];
     corridors.forEach((c, i) => {
       const cP = easeOut(clamp((corridorProg - i * .18) * 1.6, 0, 1));
@@ -844,6 +1185,7 @@ function swMap(which, btn) {
     rngSeed = 42;
 
     drawSky(sim);
+    drawClouds(sim);
     drawCity(sim);
     drawMountain(sim);
     drawAirflow(sim);
@@ -853,17 +1195,22 @@ function swMap(which, btn) {
     const trunkH   = lerp(16, H * .37, sim.trunkGrowth);
     const trunkTop = gY - trunkH;
 
-    ctx.strokeStyle = `rgb(${Math.round(lerp(130,152,sim.p))},${Math.round(lerp(98,115,sim.p))},${Math.round(lerp(68,78,sim.p))})`;
-    ctx.lineWidth   = lerp(4, 12, sim.trunkWeight);
-    ctx.lineCap     = 'round';
-    ctx.beginPath(); ctx.moveTo(cx, gY); ctx.lineTo(cx, trunkTop); ctx.stroke();
+    // Suppress 2D tree when Three.js is promoted — prevents double-tree conflict.
+    // threeRenderer is set only if THREE.js loads; remains undefined on CDN failure,
+    // which restores full 2D fallback automatically. Code preserved in both branches.
+    if (!threeRenderer) {
+      ctx.strokeStyle = `rgb(${Math.round(lerp(130,152,sim.p))},${Math.round(lerp(98,115,sim.p))},${Math.round(lerp(68,78,sim.p))})`;
+      ctx.lineWidth   = lerp(4, 12, sim.trunkWeight);
+      ctx.lineCap     = 'round';
+      ctx.beginPath(); ctx.moveTo(cx, gY); ctx.lineTo(cx, trunkTop); ctx.stroke();
 
-    if (sim.branchProg > 0) {
-      const bLen = lerp(18, H * .185, sim.branchScale);
-      rngSeed = 42;
-      drawBranch(cx, trunkTop, Math.PI / 2 + .44 + sim.swayL, bLen, 0, sim.branchDepth, sim.branchProg, sim.leafCol, lerp(3, 7, sim.p), sim.t);
-      rngSeed = 84;
-      drawBranch(cx, trunkTop, Math.PI / 2 - .44 + sim.swayR, bLen, 0, sim.branchDepth, sim.branchProg, sim.leafCol, lerp(3, 7, sim.p), sim.t);
+      if (sim.branchProg > 0) {
+        const bLen = lerp(18, H * .185, sim.branchScale);
+        rngSeed = 42;
+        drawBranch(cx, trunkTop, Math.PI / 2 + .44 + sim.swayL, bLen, 0, sim.branchDepth, sim.branchProg, sim.leafCol, lerp(3, 7, sim.p), sim.t);
+        rngSeed = 84;
+        drawBranch(cx, trunkTop, Math.PI / 2 - .44 + sim.swayR, bLen, 0, sim.branchDepth, sim.branchProg, sim.leafCol, lerp(3, 7, sim.p), sim.t);
+      }
     }
 
     drawCorridors(sim, cx, gY);
@@ -898,6 +1245,19 @@ function swMap(which, btn) {
   });
 
   loop();
+
+  // ── DEV: press T to toggle large-preview test mode ─────────────────────────
+  // Adds/removes .three-large on #three-wrap. The ResizeObserver from Phase 3A
+  // fires automatically on the resulting size change and updates the WebGL buffer
+  // and camera.aspect + updateProjectionMatrix(). No persistent state — reload
+  // clears it. Remove this block (and the .three-large CSS rule) before shipping.
+  document.addEventListener('keydown', function(e) {
+    if (e.key !== 'T' && e.key !== 't') return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    const wrap = document.getElementById('three-wrap');
+    wrap.classList.toggle('three-large');
+    console.log('[BioAir] three-large preview:', wrap.classList.contains('three-large') ? 'ON' : 'OFF');
+  });
 })();
 
 /* ─── ACTIVE NAV ─────────────────────────── */

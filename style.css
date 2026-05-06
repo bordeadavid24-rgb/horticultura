@@ -910,7 +910,7 @@ footer p { font-family:var(--ff-mono); font-size:.62rem; color:var(--text-faint)
 ───────────────────────────────────────────── */
 #tree-section {
   position: relative;
-  height: 350vh;
+  height: 660vh;
 }
 #tree-sticky {
   position: sticky;
@@ -931,10 +931,9 @@ footer p { font-family:var(--ff-mono); font-size:.62rem; color:var(--text-faint)
   background: var(--bg-page);
 }
 
-/* ── Three.js evaluation panel ─────────────────────────────────────────────
-   Right-side panel for judging 3D tree composition, lighting, and airflow.
-   Transparent background — the Canvas tree shows through; 3D tree overlays.
-   Text overlay (z-index 2) stays readable above this panel (z-index 1).
+/* ── Three.js cinematic preview panel ──────────────────────────────────────
+   Right-side panel. Scroll-driven rotation/reveal; no pointer interaction.
+   Starts opacity:0 — JS sets opacity each frame via renderThree().
 ────────────────────────────────────────────────────────────────────────── */
 #three-wrap {
   position: absolute;
@@ -949,6 +948,7 @@ footer p { font-family:var(--ff-mono); font-size:.62rem; color:var(--text-faint)
   box-shadow: 0 2px 28px rgba(0, 0, 0, 0.06), 0 0 0 0.5px rgba(78, 154, 94, 0.08);
   overflow: hidden;
   pointer-events: none;
+  opacity: 0;
 }
 #three-wrap canvas {
   display: block;
@@ -970,6 +970,56 @@ footer p { font-family:var(--ff-mono); font-size:.62rem; color:var(--text-faint)
   #three-wrap { display: none; }
 }
 
+/* ── DEV: large-preview test class ─────────────────────────────────────────
+   Toggled by pressing T while serving via Live Server / http.server.
+   Grows #three-wrap to near-fullscreen inside #tree-sticky so camera framing,
+   fog, and resize handling can be verified before Phase 4 promotion.
+   ResizeObserver (Phase 3A) drives buffer + camera update automatically.
+   opacity:1 !important overrides the per-frame JS fade so the panel is
+   visible even at p=0. Revert: press T again, or reload the page.
+────────────────────────────────────────────────────────────────────────── */
+#three-wrap.three-large {
+  right: auto;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: clamp(500px, 72vw, 960px);
+  aspect-ratio: 16 / 9;
+  z-index: 3;
+  border-radius: 6px;
+  border-color: rgba(78, 154, 94, 0.30);
+  box-shadow: 0 8px 60px rgba(0, 0, 0, 0.14), 0 0 0 1px rgba(78, 154, 94, 0.14);
+  opacity: 1 !important;
+}
+
+/* ── Phase 4A: promoted hero state ─────────────────────────────────────────
+   Three.js becomes the main intro visual inside the tree section.
+   Canvas (#tree-canvas) stays active behind it — alpha:true on the WebGL
+   surface lets the 2D sky/city show through transparent areas.
+   The wrap fills the full sticky viewport: no border, no panel frame,
+   no shadow, no rounded corner — pure blended overlay.
+   Text overlay (z-index:2) remains above; JS scroll-driven opacity unchanged.
+   Revert: remove classList.add('three-promoted') in script.js + delete block.
+────────────────────────────────────────────────────────────────────────── */
+#three-wrap.three-promoted {
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transform: none;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: unset;
+  border-radius: 0;
+  border-color: transparent;
+  box-shadow: none;
+}
+#three-wrap.three-promoted #three-label {
+  display: none;
+}
+@media (max-width: 860px) {
+  #three-wrap.three-promoted { display: none; }
+}
+
 #tree-text-overlay {
   position: absolute;
   inset: 0;
@@ -979,9 +1029,15 @@ footer p { font-family:var(--ff-mono); font-size:.62rem; color:var(--text-faint)
 .tree-stage-label {
   position: absolute;
   bottom: 10%;
-  left: 50%;
-  transform: translateX(-50%);
-  text-align: center;
+  left: 5vw;
+  transform: none;
+  text-align: left;
+  max-width: 360px;
+  padding: 1.1rem 1.3rem;
+  background: rgba(245,243,238,0.68);
+  border-left: 2px solid rgba(78,154,94,0.28);
+  border-radius: 0 0.5rem 0.5rem 0;
+  box-shadow: 0 2px 16px rgba(22,52,28,0.07);
   transition: opacity 0.6s ease;
 }
 .tree-stage-label .tsl-num {
@@ -1001,21 +1057,22 @@ footer p { font-family:var(--ff-mono); font-size:.62rem; color:var(--text-faint)
   color: rgba(22,52,28,0.88);
   display: block;
   margin-bottom: 0.35rem;
+  text-shadow: 0 1px 12px rgba(245,243,238,0.78), 0 2px 20px rgba(245,243,238,0.52);
 }
 .tree-stage-label .tsl-body {
   font-family: var(--ff-sans);
   font-size: 0.82rem;
   color: rgba(45,80,52,0.72);
-  max-width: 42ch;
   line-height: 1.6;
   display: block;
+  text-shadow: 0 1px 10px rgba(245,243,238,0.70);
 }
 .tree-progress-bar {
   position: absolute;
   bottom: 6%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 180px;
+  left: 5vw;
+  transform: none;
+  width: 160px;
   height: 2px;
   background: rgba(61,122,74,0.12);
   border-radius: 2px;
