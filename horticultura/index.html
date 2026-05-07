@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BioAir Brașov – Coridorul Verde de Ventilație Urbană</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;0,900;1,400;1,700&family=Plus+Jakarta+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="cur"></div>
+<div id="cur-ring"></div>
+
+<!-- ── GLOBAL AIRFLOW LAYER ──────────────────────────────────────────────────
+     Fixed SVG sitting above the ambient canvas but below all page content.
+     Mirrors the dash style from drawAirflow() in the tree canvas:
+       same color family (rgba 160,220,175), same [7,13] dasharray, same
+       rightward march via stroke-dashoffset, same per-line opacity pulse.
+     Tree canvas keeps its own local drawAirflow — this is the global instance.
+──────────────────────────────────────────────────────────────────────────── -->
+<div id="airflow-bg" aria-hidden="true">
+  <svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <g fill="none" stroke-width="1" stroke-linecap="round" stroke-dasharray="7 13">
+      <path class="afl" stroke="rgba(160,220,175,0.07)" style="animation-duration:3.8s,8s;animation-delay:0s,-1s"
+            d="M-80,92  C400,80  700,104 1000,88  S1500,96  2000,90"/>
+      <path class="afl" stroke="rgba(160,220,175,0.05)" style="animation-duration:5.2s,9s;animation-delay:-1.3s,-2.5s"
+            d="M-80,158 C300,170 600,148  900,162  S1400,154 2000,160"/>
+      <path class="afl" stroke="rgba(160,220,175,0.08)" style="animation-duration:4.5s,7s;animation-delay:-2.8s,-4s"
+            d="M-80,228 C350,215 700,238 1050,222 S1550,232 2000,226"/>
+      <path class="afl" stroke="rgba(160,220,175,0.05)" style="animation-duration:6.1s,11s;animation-delay:-0.7s,-3s"
+            d="M-80,308 C280,295 580,318  880,304  S1380,312 2000,306"/>
+      <path class="afl" stroke="rgba(160,220,175,0.06)" style="animation-duration:3.5s,8s;animation-delay:-3.5s,-6s"
+            d="M-80,392 C320,405 650,378  950,395  S1450,386 2000,394"/>
+      <path class="afl" stroke="rgba(160,220,175,0.04)" style="animation-duration:5.8s,9s;animation-delay:-1.8s,-1s"
+            d="M-80,482 C360,470 680,492 1020,478 S1530,486 2000,480"/>
+      <path class="afl" stroke="rgba(160,220,175,0.07)" style="animation-duration:4.2s,10s;animation-delay:-4.1s,-5s"
+            d="M-80,575 C290,562 600,586  880,570  S1360,578 2000,573"/>
+      <path class="afl" stroke="rgba(160,220,175,0.05)" style="animation-duration:6.5s,7s;animation-delay:-2.2s,-7s"
+            d="M-80,672 C330,685 660,660 1000,675 S1500,668 2000,674"/>
+      <path class="afl" stroke="rgba(160,220,175,0.06)" style="animation-duration:3.9s,12s;animation-delay:-5s,-3s"
+            d="M-80,778 C370,765 700,790 1040,775 S1560,782 2000,776"/>
+      <path class="afl" stroke="rgba(160,220,175,0.04)" style="animation-duration:5.0s,8s;animation-delay:-0.5s,-9s"
+            d="M-80,888 C310,876 620,900  940,884  S1430,892 2000,886"/>
+    </g>
+  </svg>
+</div>
+
+<canvas id="ambient-canvas"></canvas>
+
+<!-- ── NAV ──────────────────────────────────── -->
+<nav id="nav">
+  <div class="nav-logo">Bio<em>Air</em> Brașov</div>
+  <ul class="nav-links">
+    <li><a href="#hero">Acasă</a></li>
+    <li><a href="#problema">Problema</a></li>
+    <li><a href="#solutia">Soluția</a></li>
+    <li><a href="#fezabilitate">Fezabilitate</a></li>
+    <li><a href="#harta">Hartă</a></li>
+    <li><a href="#inovatie">Inovație</a></li>
+    <li><a href="#implementare">Plan</a></li>
+    <li><a href="#buget">Buget</a></li>
+    <li><a href="#referinte">Referințe</a></li>
+  </ul>
+</nav>
+
+<!-- ── TREE ANIMATION SECTION ────────────────── -->
+<div id="tree-section">
+  <div id="tree-sticky">
+    <canvas id="tree-canvas"></canvas>
+    <div id="three-wrap">
+      <canvas id="three-canvas"></canvas>
+      <span id="three-label">3D</span>
+    </div>
+    <div id="tree-text-overlay">
+      <div class="tree-header-bar">
+        <div class="thb-left">
+          <div class="thb-left-title">BioAir <em>Brașov</em></div>
+          <div class="thb-left-sub">Coridorul Verde</div>
+        </div>
+        <div class="thb-right">
+          <div class="thb-right-text">Brașov — Povestea Copacului</div>
+          <div class="thb-right-label">derulează pentru a descoperi</div>
+        </div>
+      </div>
+      <div class="tree-corner-badge">
+        <div class="tcb-title">BioAir</div>
+        <span class="tcb-sub">Brașov · povestea copacului</span>
+      </div>
+      <div class="tree-stage-label">
+        <span class="tsl-num" id="tsl-num">Etapa 1 / 5</span>
+        <span class="tsl-title" id="tsl-title">Un copac singur într-un oraș poluat</span>
+        <span class="tsl-body" id="tsl-body">Brașovul de astăzi – parcuri izolate, aer viciat de trafic, nicio conexiune biologică între spațiile verzi.</span>
+      </div>
+      <div class="tree-progress-bar">
+        <div class="tree-progress-fill" id="tree-pfill"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── POST-TREE LANDING ──────────────────────── -->
+<section id="post-tree">
+  <div class="post-tree-inner">
+    <span class="pt-label">Observație → Interpretare</span>
+    <h2 class="pt-title">Urban Airflow<br><em>System</em></h2>
+    <p class="pt-body">Copacii nu sunt peisagistică. Fiecare coridor verde dirijează aerul rece coborât de pe Tâmpa și Postăvarul spre centrul urban — o rețea de ventilație pasivă, calibrată la scara orașului.</p>
+    <div class="pt-divider"></div>
+    <span class="pt-footnote">Brașov · Coridorul Verde de Ventilație Urbană</span>
+  </div>
+</section>
+
+<!-- ── HERO ──────────────────────────────────── -->
+<section id="hero">
+  <div class="hero-blob hero-blob-1"></div>
+  <div class="hero-blob hero-blob-2"></div>
+  <div class="hero-blob hero-blob-3"></div>
+  <div class="hero-topo"></div>
+
+  <div class="hero-inner">
+    <div>
+      <div class="hero-eyebrow">Concurs Regional · FHADR USAMV Cluj · 2026</div>
+      <h1 class="hero-title">
+        <span class="word-light">Proiect</span>
+        <em>BioAir</em>
+        <span class="word-main">Brașov</span>
+      </h1>
+      <p class="hero-body">
+        O rețea de <strong>coridoare verzi</strong> care reconectează parcurile fragmentate ale Brașovului, canalizează aerul curat de pe Tâmpa și Postăvarul spre centrul urban și filtrează poluanții produși de trafic și industrie.
+      </p>
+      <div class="hero-actions">
+        <a href="#solutia" class="btn-fill">Descoperă proiectul →</a>
+        <a href="#harta" class="btn-outline">Vezi harta</a>
+      </div>
+    </div>
+    <div>
+      <div class="hero-stats">
+        <div class="hstat">
+          <div class="hstat-val">+25%</div>
+          <div class="hstat-lbl">PM10 urban vs. suburban în Brașov</div>
+          <div class="hstat-src">Hemerean et al., 2023</div>
+        </div>
+        <div class="hstat">
+          <div class="hstat-val">39%</div>
+          <div class="hstat-lbl">Suprafață protejată Stuttgart prin coridoare similare</div>
+          <div class="hstat-src">EBRD GreenCities, 2022</div>
+        </div>
+        <div class="hstat">
+          <div class="hstat-val">−2°C</div>
+          <div class="hstat-lbl">Reducere temperatură locală estimată (Faza 2)</div>
+          <div class="hstat-src">Estimare bazată pe literatură*</div>
+        </div>
+        <div class="hstat">
+          <div class="hstat-val">60k</div>
+          <div class="hstat-lbl">Locuitori beneficiari direcți estimați</div>
+          <div class="hstat-src">Faza 1+2, zona centrală</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-cue">
+    <div class="scroll-track"></div>
+    <span>Scroll</span>
+  </div>
+</section>
+
+<!-- ── PROBLEMA ───────────────────────────────── -->
+<section class="sec" id="problema">
+  <div class="sec-blob" style="width:400px;height:400px;background:radial-gradient(ellipse,rgba(110,184,130,.1) 0%,transparent 70%);top:-100px;right:-80px;"></div>
+  <div class="sec-inner">
+    <div class="sec-eyebrow rv">01 — Problema identificată</div>
+    <h2 class="sec-title rv rv-d1">De ce are Brașovul nevoie<br>de <em>aer mai curat</em>?</h2>
+    <p class="sec-lead rv rv-d2">Brașovul este construit pe matricea unui oraș medieval – o formă de bazin înconjurat de munți care blochează circulația naturală a aerului și concentrează poluanții în interiorul orașului.</p>
+    <div class="prob-grid">
+      <div class="pcard rv rv-d1">
+        <div class="pcard-idx">01 / Sursa principală</div>
+        <h3>Traficul rutier și emisiile</h3>
+        <p>Un studiu peer-reviewed din 2023 (Heliyon / ScienceDirect) care a monitorizat Brașovul din 2010 până în 2022 a concluzionat că traficul vehiculelor este principala sursă de poluare. Circa 79% din autovehicule în România depășesc 11 ani vechime, producând de zeci de ori mai mulți poluanți decât valorile nominale Euro.</p>
+        <div class="pcard-stat">
+          <span class="big">+25%</span>
+          <span class="desc">PM10 în zona urbană vs. suburbană Brașov,<br>corelat direct cu traficul</span>
+        </div>
+      </div>
+      <div class="pcard rv rv-d2">
+        <div class="pcard-idx">02 / Geografie urbană</div>
+        <h3>Forma de bazin și străzile înguste</h3>
+        <p>Structura medievală a centrului creează „canion urban": aerul circulă greu între clădiri, poluanții stagnează. Munții Tâmpa și Postăvarul înconjoară orașul și blochează disiparea naturală a poluanților în atmosferă. Brașovul este, literalmente, un bol în care se adună aerul murdar.</p>
+      </div>
+      <div class="pcard rv rv-d3">
+        <div class="pcard-idx">03 / Fragmentare ecologică</div>
+        <h3>Parcuri izolate, fără conectivitate</h3>
+        <p>Parcul Titulescu (centru), Parcul Tractorul (~40 ha, nord-est), Parcul Noua și Zoo (sud-est) sunt spații verzi de calitate, dar complet izolate între ele de artere mari și blocuri. Fauna polenizatoare – albine, fluturi, lilieci – nu se poate deplasa între aceste insule biologice.</p>
+      </div>
+      <div class="pcard rv rv-d4">
+        <div class="pcard-idx">04 / Oportunitate politică</div>
+        <h3>Brașovul – Capitala Verde a României</h3>
+        <p>Brașovul este primul municipiu din România care a trecut la 100% energie verde pentru consumul public (2022). Planul de Acțiune pentru Energie Durabilă și Climă (PAED) al orașului oferă cadrul instituțional și financiar favorabil acestui tip de proiect.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── SOLUȚIA ────────────────────────────────── -->
+<section class="sec" id="solutia">
+  <div class="sec-inner">
+    <div class="sec-eyebrow rv">02 — Ideea propusă</div>
+    <h2 class="sec-title rv rv-d1">Rețeaua <em>BioAir</em>:<br>coridoare verzi conectate</h2>
+    <div class="sol-grid">
+      <div class="sol-prose">
+        <p class="rv rv-d1"><strong>BioAir Brașov</strong> propune crearea unei rețele de coridoare verzi liniare – de-a lungul bulevardelor principale și, într-o etapă ulterioară, pe structuri supraînălțate deasupra arterelor aglomerate – care conectează parcurile existente într-o rețea biologică unică.</p>
+        <div class="blockquote rv rv-d2">
+          <p>„Un coridor verde nu este o stradă cu copaci. Este o rută de respirație pentru întreg ecosistemul urban – și pentru locuitorii lui."</p>
+          <cite>— Principiu de proiectare, adaptat după Stuttgart Climate Atlas</cite>
+        </div>
+        <p class="rv rv-d2">Coridoarele sunt orientate pe direcțiile dominante de vânt local, canalizând activ aerul rece coborât de pe Tâmpa și Postăvarul spre zona centrală. Modelul de referință este <strong>Stuttgart (Germania)</strong>, unde o rețea similară a protejat 39% din suprafața urbană – un proces început în 1970 și validat printr-un Atlas Climatic dedicat în 2008.</p>
+        <p class="rv rv-d3">Spre deosebire de Stuttgart, Brașovul are un avantaj natural excepțional: munții din imediata vecinătate produc continuu aer curat și răcoros. Coridoarele BioAir nu generează mișcarea aerului – o <strong>captează și o dirijează</strong> acolo unde este nevoie.</p>
+      </div>
+      <div class="rv rv-d2">
+        <div class="diagram-card">
+          <div class="diag-header">
+            <div class="diag-dots">
+              <div class="diag-dot" style="background:#fca5a5;"></div>
+              <div class="diag-dot" style="background:#fcd34d;"></div>
+              <div class="diag-dot" style="background:#86efac;"></div>
+            </div>
+            <span>secțiune transversală schematică</span>
+          </div>
+          <div class="diag-body">
+            <div class="xsec">
+              <div class="xrow" style="height:54px;">
+                <div class="xbuild" style="height:54px;">Clădiri 15–30m</div>
+                <div class="xcorr" style="height:54px;">
+                  <span style="font-size:.52rem;color:var(--green-600);">Nivel +6m</span>
+                  <div class="xwind"><span>→</span><span>→</span><span>→</span></div>
+                  <span style="font-size:.5rem;color:var(--text-faint);">Pod Viu</span>
+                </div>
+                <div class="xbuild" style="height:54px;">Clădiri 15–30m</div>
+              </div>
+              <div style="display:flex;justify-content:center;gap:1rem;padding:.4rem 0;">
+                <span style="font-size:.85rem;color:var(--green-400);animation:wflow 2s ease-in-out infinite;">→</span>
+                <span style="font-size:.85rem;color:var(--green-400);animation:wflow 2s .25s ease-in-out infinite;">→</span>
+                <span style="font-size:.85rem;color:var(--green-400);animation:wflow 2s .5s ease-in-out infinite;">→</span>
+              </div>
+              <div class="xrow" style="height:40px;">
+                <div class="xstreet" style="height:40px;">Trotuare</div>
+                <div class="xcorr" style="height:40px;background:linear-gradient(180deg,var(--green-100),var(--green-200));">
+                  <span style="font-size:.52rem;">Arbori</span>
+                  <span style="font-size:.48rem;color:var(--text-muted);">+ arbuști</span>
+                </div>
+                <div class="xstreet" style="height:40px;">Trotuare</div>
+              </div>
+              <div class="xrow" style="height:26px;margin-top:3px;">
+                <div class="xstreet" style="height:26px;background:#e0dbd0;">Carosabil</div>
+                <div class="xsoil">Rădăcini</div>
+                <div class="xstreet" style="height:26px;background:#e0dbd0;">Carosabil</div>
+              </div>
+            </div>
+          </div>
+          <div class="diag-legend">
+            <div class="leg-r"><div class="leg-sw" style="background:var(--green-200);border:1px solid var(--green-300);"></div>Vegetație activă (filtrare PM2.5, NO₂)</div>
+            <div class="leg-r"><div class="leg-sw" style="background:linear-gradient(90deg,var(--green-300),var(--green-500));"></div>Curent de aer curat (Tâmpa → centru)</div>
+            <div class="leg-r"><div class="leg-sw" style="background:var(--gold-pale);border:1px solid rgba(184,136,46,.3);"></div>Structură supraînălțată (Faza 2)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FEZABILITATE ───────────────────────────── -->
+<section class="sec" id="fezabilitate">
+  <div class="sec-blob" style="width:350px;height:350px;background:radial-gradient(ellipse,rgba(184,136,46,.08) 0%,transparent 70%);bottom:-80px;left:-60px;"></div>
+  <div class="sec-inner">
+    <div class="sec-eyebrow rv">03 — Cum este realizabil?</div>
+    <h2 class="sec-title rv rv-d1">Ce există deja și<br>ce <em>construiește</em> BioAir</h2>
+    <p class="sec-lead rv rv-d2">Proiectul nu pornește de la zero. Infrastructura verde existentă a Brașovului oferă o bază solidă – BioAir o completează și o conectează.</p>
+    <div class="fez-grid">
+      <div class="rv rv-d1">
+        <h3 class="fez-col">Ce există deja în Brașov</h3>
+        <div class="fez-item">
+          <div class="fez-badge green">01</div>
+          <p><strong>Parcuri mari de calitate</strong>Parcul Titulescu (centru), Parcul Tractorul (~40 ha), Grădina Zoo și pădurea Noua (sud-est). Acestea sunt nodurile rețelei – există, sunt bine întreținute, nu se construiesc de la zero.</p>
+        </div>
+        <div class="fez-item">
+          <div class="fez-badge green">02</div>
+          <p><strong>Tâmpa și Postăvarul – rezervoare de aer</strong>Masivele muntoase produc continuu curenții descendenți de aer răcoros și curat. Acest „motor natural" face proiectul mai eficient cu mai puțină infrastructură decât în orașele de câmpie.</p>
+        </div>
+        <div class="fez-item">
+          <div class="fez-badge green">03</div>
+          <p><strong>Aliniamente de arbori pe bulevarde</strong>Bulevardul Eroilor și alte artere principale au deja arbori plantați pe margini. BioAir nu îi înlocuiește – le adaugă un al doilea strat și le conectează.</p>
+        </div>
+        <div class="fez-item">
+          <div class="fez-badge green">04</div>
+          <p><strong>Voință politică documentată</strong>Brașovul este declarat „Capitala Verde a României" și are deja 100% energie verde pentru consumul public. PAED-ul orașului oferă cadrul instituțional pentru finanțare.</p>
+        </div>
+      </div>
+      <div class="rv rv-d2">
+        <h3 class="fez-col">Ce adaugă BioAir concret</h3>
+        <div class="fez-item">
+          <div class="fez-badge gold">A</div>
+          <p><strong>Conectivitate liniară între parcuri</strong>Tronsoanele de bulevard între parcuri (400–900m) primesc un al doilea rând de arbori, arbuști filtranți și plante de acoperire. Nu se demolează nimic – se adaugă în spațiile publice existente.</p>
+        </div>
+        <div class="fez-item">
+          <div class="fez-badge gold">B</div>
+          <p><strong>Orientare științifică pe direcția vântului</strong>Coridoarele sunt selectate și orientate după direcția dominantă a vântului local, determinate printr-un studiu meteorologic, pentru a amplifica curenții naturali de la munte spre oraș.</p>
+        </div>
+        <div class="fez-item">
+          <div class="fez-badge gold">C</div>
+          <p><strong>„Podul Viu" – coridor supraînălțat pilot</strong>O structură modulară ușoară (oțel + substrat vegetal) deasupra unui bulevard, 50–80m. Precedente similare: Singapore (Park Connector Network) și Paris (Promenade Plantée).</p>
+        </div>
+        <div class="fez-note">
+          <p>Coridoarele la sol sunt realizabile cu <strong>tehnologie standard de peisagistică urbană</strong>, la costuri comparabile cu reabilitarea unui trotuar, fără modificări ale structurii străzilor.</p>
+          <div class="src">Metodologie: NetZeroCities (2024); Stuttgart Climate Atlas (EBRD, 2022)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── HARTĂ ──────────────────────────────────── -->
+<section class="sec" id="harta">
+  <div class="sec-inner">
+    <div class="sec-eyebrow rv">04 — Vizualizare spațială</div>
+    <h2 class="sec-title rv rv-d1">Harta Brașovului:<br><em>înainte și după</em> BioAir</h2>
+    <p class="sec-lead rv rv-d2">Pozitionarea parcurilor existente și a coridoarelor propuse, reprezentată schematic pe geometria reală a orașului.</p>
+    <div class="map-wrap rv rv-d2">
+      <div class="map-stage">
+        <div class="map-tabs">
+          <button class="mtab on" id="mb" onclick="swMap('before',this)">Situația actuală</button>
+          <button class="mtab"    id="ma" onclick="swMap('after',this)">După BioAir</button>
+        </div>
+        <div class="map-canvas">
+          <!-- BEFORE -->
+          <svg id="sv-before" viewBox="0 0 760 440" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="pg" width="24" height="24" patternUnits="userSpaceOnUse">
+                <path d="M24 0L0 0 0 24" fill="none" stroke="rgba(78,154,94,0.07)" stroke-width="0.5"/>
+              </pattern>
+              <radialGradient id="rPoll" cx="50%" cy="52%" r="42%">
+                <stop offset="0%" stop-color="rgba(180,80,40,0.14)"/>
+                <stop offset="100%" stop-color="transparent"/>
+              </radialGradient>
+            </defs>
+            <rect width="760" height="440" fill="#f0ede5"/>
+            <rect width="760" height="440" fill="url(#pg)"/>
+            <!-- Mountains -->
+            <ellipse cx="82" cy="192" rx="76" ry="62" fill="rgba(61,122,74,0.18)" stroke="rgba(61,122,74,0.4)" stroke-width="1.2"/>
+            <text x="82" y="188" text-anchor="middle" fill="#2d5a36" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="600">TÂMPA</text>
+            <text x="82" y="199" text-anchor="middle" fill="#4e9a5e" font-family="JetBrains Mono,monospace" font-size="7">pădure</text>
+            <ellipse cx="638" cy="76" rx="106" ry="58" fill="rgba(61,122,74,0.18)" stroke="rgba(61,122,74,0.4)" stroke-width="1.2"/>
+            <text x="638" y="73" text-anchor="middle" fill="#2d5a36" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="600">POSTĂVARUL</text>
+            <text x="638" y="84" text-anchor="middle" fill="#4e9a5e" font-family="JetBrains Mono,monospace" font-size="7">masiv împădurit</text>
+            <!-- City grid -->
+            <rect x="225" y="140" width="310" height="210" fill="rgba(200,195,185,0.35)" stroke="rgba(150,140,120,0.2)" stroke-width="0.5" rx="2"/>
+            <g stroke="rgba(140,130,110,0.25)" stroke-width="0.5">
+              <line x1="260" y1="140" x2="260" y2="350"/><line x1="298" y1="140" x2="298" y2="350"/>
+              <line x1="334" y1="140" x2="334" y2="350"/><line x1="370" y1="140" x2="370" y2="350"/>
+              <line x1="406" y1="140" x2="406" y2="350"/><line x1="442" y1="140" x2="442" y2="350"/>
+              <line x1="478" y1="140" x2="478" y2="350"/><line x1="514" y1="140" x2="514" y2="350"/>
+              <line x1="225" y1="172" x2="535" y2="172"/><line x1="225" y1="204" x2="535" y2="204"/>
+              <line x1="225" y1="236" x2="535" y2="236"/><line x1="225" y1="268" x2="535" y2="268"/>
+              <line x1="225" y1="300" x2="535" y2="300"/><line x1="225" y1="332" x2="535" y2="332"/>
+            </g>
+            <!-- Boulevard -->
+            <line x1="150" y1="224" x2="610" y2="224" stroke="rgba(180,150,60,0.4)" stroke-width="2.5"/>
+            <text x="382" y="218" text-anchor="middle" fill="rgba(120,90,20,0.55)" font-family="JetBrains Mono,monospace" font-size="6.5">Bd. Eroilor / Calea București</text>
+            <!-- Pollution zone -->
+            <rect x="150" y="130" width="450" height="255" fill="url(#rPoll)" rx="8"/>
+            <!-- Parks isolated -->
+            <ellipse cx="318" cy="230" rx="26" ry="20" fill="rgba(78,154,94,0.85)" stroke="rgba(45,90,54,0.7)" stroke-width="1.5"/>
+            <text x="318" y="227" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="7.5" font-weight="600">Parc</text>
+            <text x="318" y="236" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="7.5" font-weight="600">Titulescu</text>
+            <ellipse cx="490" cy="140" rx="36" ry="26" fill="rgba(78,154,94,0.85)" stroke="rgba(45,90,54,0.7)" stroke-width="1.5"/>
+            <text x="490" y="137" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="7.5" font-weight="600">Parc</text>
+            <text x="490" y="146" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="7.5" font-weight="600">Tractorul</text>
+            <ellipse cx="562" cy="354" rx="40" ry="28" fill="rgba(78,154,94,0.85)" stroke="rgba(45,90,54,0.7)" stroke-width="1.5"/>
+            <text x="562" y="351" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="7" font-weight="600">Zoo + Parc</text>
+            <text x="562" y="360" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="7" font-weight="600">Noua</text>
+            <ellipse cx="408" cy="290" rx="16" ry="12" fill="rgba(78,154,94,0.8)" stroke="rgba(45,90,54,0.6)" stroke-width="1"/>
+            <text x="408" y="287" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="6.5">Parc</text>
+            <text x="408" y="295" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="6.5">Civic</text>
+            <!-- Isolation markers -->
+            <text x="172" y="192" fill="rgba(180,60,30,0.75)" font-family="Plus Jakarta Sans,sans-serif" font-size="8" font-weight="600">✗ aer blocat</text>
+            <text x="410" y="96" fill="rgba(180,60,30,0.75)" font-family="Plus Jakarta Sans,sans-serif" font-size="8" font-weight="600">✗ parcuri izolate</text>
+            <text x="555" y="298" fill="rgba(180,60,30,0.75)" font-family="Plus Jakarta Sans,sans-serif" font-size="8" font-weight="600">✗ fără biodiversitate</text>
+            <!-- Title badge -->
+            <rect x="14" y="14" width="192" height="34" rx="5" fill="rgba(255,255,255,0.88)" stroke="rgba(180,60,30,0.25)" stroke-width="1"/>
+            <text x="24" y="28" fill="rgba(160,50,20,0.85)" font-family="JetBrains Mono,monospace" font-size="8.5" font-weight="500">SITUAȚIA ACTUALĂ</text>
+            <text x="24" y="40" fill="rgba(100,80,60,0.6)" font-family="JetBrains Mono,monospace" font-size="7">parcuri fragmentate</text>
+            <!-- Compass -->
+            <text x="726" y="428" fill="rgba(61,122,74,0.5)" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="600">N</text>
+            <line x1="735" y1="432" x2="735" y2="414" stroke="rgba(61,122,74,0.4)" stroke-width="1.2"/>
+            <polygon points="735,412 732,421 735,418 738,421" fill="rgba(61,122,74,0.5)"/>
+          </svg>
+
+          <!-- AFTER -->
+          <svg id="sv-after" viewBox="0 0 760 440" xmlns="http://www.w3.org/2000/svg" style="display:none;">
+            <defs>
+              <pattern id="pg2" width="24" height="24" patternUnits="userSpaceOnUse">
+                <path d="M24 0L0 0 0 24" fill="none" stroke="rgba(78,154,94,0.07)" stroke-width="0.5"/>
+              </pattern>
+              <filter id="gl">
+                <feGaussianBlur stdDeviation="3" result="b"/>
+                <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <radialGradient id="rAir" cx="42%" cy="50%" r="52%">
+                <stop offset="0%" stop-color="rgba(78,154,94,0.1)"/>
+                <stop offset="100%" stop-color="transparent"/>
+              </radialGradient>
+            </defs>
+            <rect width="760" height="440" fill="#eef4ef"/>
+            <rect width="760" height="440" fill="url(#pg2)"/>
+            <!-- Mountains -->
+            <ellipse cx="82" cy="192" rx="76" ry="62" fill="rgba(61,122,74,0.22)" stroke="rgba(61,122,74,0.5)" stroke-width="1.5"/>
+            <text x="82" y="188" text-anchor="middle" fill="#2d5a36" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="600">TÂMPA</text>
+            <text x="82" y="199" text-anchor="middle" fill="#4e9a5e" font-family="JetBrains Mono,monospace" font-size="7">sursă aer curat</text>
+            <ellipse cx="638" cy="76" rx="106" ry="58" fill="rgba(61,122,74,0.22)" stroke="rgba(61,122,74,0.5)" stroke-width="1.5"/>
+            <text x="638" y="73" text-anchor="middle" fill="#2d5a36" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="600">POSTĂVARUL</text>
+            <text x="638" y="84" text-anchor="middle" fill="#4e9a5e" font-family="JetBrains Mono,monospace" font-size="7">sursă aer curat</text>
+            <!-- City grid -->
+            <rect x="225" y="140" width="310" height="210" fill="rgba(200,220,205,0.3)" stroke="rgba(100,150,110,0.15)" stroke-width="0.5" rx="2"/>
+            <g stroke="rgba(100,150,110,0.18)" stroke-width="0.5">
+              <line x1="260" y1="140" x2="260" y2="350"/><line x1="298" y1="140" x2="298" y2="350"/>
+              <line x1="334" y1="140" x2="334" y2="350"/><line x1="370" y1="140" x2="370" y2="350"/>
+              <line x1="406" y1="140" x2="406" y2="350"/><line x1="442" y1="140" x2="442" y2="350"/>
+              <line x1="478" y1="140" x2="478" y2="350"/><line x1="514" y1="140" x2="514" y2="350"/>
+              <line x1="225" y1="172" x2="535" y2="172"/><line x1="225" y1="204" x2="535" y2="204"/>
+              <line x1="225" y1="236" x2="535" y2="236"/><line x1="225" y1="268" x2="535" y2="268"/>
+              <line x1="225" y1="300" x2="535" y2="300"/><line x1="225" y1="332" x2="535" y2="332"/>
+            </g>
+            <!-- Air quality halo -->
+            <ellipse cx="370" cy="245" rx="220" ry="145" fill="url(#rAir)"/>
+            <!-- Boulevard faint -->
+            <line x1="150" y1="224" x2="610" y2="224" stroke="rgba(180,150,60,0.2)" stroke-width="1.5"/>
+            <!-- CORRIDORS -->
+            <line x1="158" y1="224" x2="292" y2="224" stroke="rgba(78,154,94,0.3)" stroke-width="10" stroke-linecap="round" filter="url(#gl)"/>
+            <line x1="158" y1="224" x2="292" y2="224" stroke="#4e9a5e" stroke-width="3.5" stroke-linecap="round"/>
+            <line x1="344" y1="210" x2="454" y2="166" stroke="rgba(78,154,94,0.3)" stroke-width="10" stroke-linecap="round" filter="url(#gl)"/>
+            <line x1="344" y1="210" x2="454" y2="166" stroke="#4e9a5e" stroke-width="3.5" stroke-linecap="round"/>
+            <line x1="526" y1="140" x2="548" y2="124" stroke="rgba(78,154,94,0.25)" stroke-width="7" stroke-linecap="round"/>
+            <line x1="526" y1="140" x2="548" y2="124" stroke="#6db882" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="318" y1="250" x2="392" y2="282" stroke="rgba(78,154,94,0.3)" stroke-width="10" stroke-linecap="round" filter="url(#gl)"/>
+            <line x1="318" y1="250" x2="392" y2="282" stroke="#4e9a5e" stroke-width="3.5" stroke-linecap="round"/>
+            <line x1="424" y1="290" x2="522" y2="328" stroke="rgba(78,154,94,0.25)" stroke-width="8" stroke-linecap="round" filter="url(#gl)"/>
+            <line x1="424" y1="290" x2="522" y2="328" stroke="#6db882" stroke-width="3" stroke-linecap="round"/>
+            <line x1="296" y1="224" x2="296" y2="314" stroke="rgba(78,154,94,0.22)" stroke-width="7" stroke-linecap="round"/>
+            <line x1="296" y1="224" x2="296" y2="314" stroke="#96d0a8" stroke-width="2" stroke-linecap="round"/>
+            <!-- Air flow arrows -->
+            <g stroke="rgba(61,122,74,0.55)" stroke-width="1.5" fill="none">
+              <line x1="150" y1="212" x2="168" y2="218"/><polyline points="162,213 168,218 162,222"/>
+              <line x1="150" y1="224" x2="168" y2="224"/><polyline points="162,219 168,224 162,228"/>
+              <line x1="150" y1="236" x2="168" y2="230"/><polyline points="162,225 168,230 162,234"/>
+            </g>
+            <text x="102" y="230" fill="rgba(45,90,54,0.6)" font-family="JetBrains Mono,monospace" font-size="7">aer curat →</text>
+            <!-- Parks glowing nodes -->
+            <ellipse cx="318" cy="230" rx="26" ry="20" fill="rgba(78,154,94,0.92)" stroke="rgba(45,90,54,0.8)" stroke-width="2" filter="url(#gl)"/>
+            <text x="318" y="227" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="7.5" font-weight="600">Parc</text>
+            <text x="318" y="236" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="7.5" font-weight="600">Titulescu</text>
+            <ellipse cx="490" cy="140" rx="36" ry="26" fill="rgba(78,154,94,0.92)" stroke="rgba(45,90,54,0.8)" stroke-width="2" filter="url(#gl)"/>
+            <text x="490" y="137" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="7.5" font-weight="600">Parc</text>
+            <text x="490" y="146" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="7.5" font-weight="600">Tractorul</text>
+            <ellipse cx="562" cy="354" rx="40" ry="28" fill="rgba(78,154,94,0.92)" stroke="rgba(45,90,54,0.8)" stroke-width="2" filter="url(#gl)"/>
+            <text x="562" y="351" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="7" font-weight="600">Zoo + Parc</text>
+            <text x="562" y="360" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="7" font-weight="600">Noua</text>
+            <ellipse cx="408" cy="290" rx="16" ry="12" fill="rgba(78,154,94,0.9)" stroke="rgba(45,90,54,0.7)" stroke-width="1.5" filter="url(#gl)"/>
+            <text x="408" y="287" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="6.5">Parc</text>
+            <text x="408" y="295" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="6.5">Civic</text>
+            <!-- Podul Viu marker -->
+            <rect x="328" y="210" width="54" height="13" rx="3" fill="rgba(245,232,200,0.9)" stroke="rgba(184,136,46,0.6)" stroke-width="1"/>
+            <text x="355" y="220" text-anchor="middle" fill="rgba(122,92,30,0.9)" font-family="JetBrains Mono,monospace" font-size="6.5">Podul Viu (pilot)</text>
+            <!-- Title badge -->
+            <rect x="14" y="14" width="214" height="34" rx="5" fill="rgba(255,255,255,0.9)" stroke="rgba(61,122,74,0.3)" stroke-width="1"/>
+            <text x="24" y="28" fill="#2d5a36" font-family="JetBrains Mono,monospace" font-size="8.5" font-weight="500">DUPĂ BioAir – 5 coridoare</text>
+            <text x="24" y="40" fill="rgba(78,154,94,0.7)" font-family="JetBrains Mono,monospace" font-size="7">rețea biologică conectată</text>
+            <!-- Compass -->
+            <text x="726" y="428" fill="rgba(61,122,74,0.5)" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="600">N</text>
+            <line x1="735" y1="432" x2="735" y2="414" stroke="rgba(61,122,74,0.4)" stroke-width="1.2"/>
+            <polygon points="735,412 732,421 735,418 738,421" fill="rgba(61,122,74,0.5)"/>
+          </svg>
+        </div>
+        <div class="map-caption" id="map-cap">Schemă schematică bazată pe geometria reală a Brașovului · Parcuri în poziții aproximative · Nu reprezintă GIS oficial</div>
+      </div>
+      <div class="map-sidebar">
+        <div class="map-leg-card">
+          <h4>Legendă</h4>
+          <div class="leg-i"><div class="leg-c" style="background:rgba(78,154,94,0.85);border:1.5px solid rgba(45,90,54,0.6);"></div>Parc / spațiu verde existent</div>
+          <div class="leg-i"><div class="leg-c" style="background:linear-gradient(90deg,rgba(78,154,94,0.7),#4e9a5e);"></div>Coridor verde BioAir</div>
+          <div class="leg-i"><div class="leg-c" style="background:rgba(245,232,200,0.9);border:1px solid rgba(184,136,46,0.5);"></div>Podul Viu (pilot)</div>
+          <div class="leg-i"><div class="leg-c" style="background:rgba(61,122,74,0.2);border:1px solid rgba(61,122,74,0.35);"></div>Masiv muntos</div>
+          <div class="leg-i"><div class="leg-c" style="background:rgba(180,80,40,0.15);border:1px dashed rgba(180,80,40,0.35);"></div>Zonă poluată (actual)</div>
+        </div>
+        <div class="map-info-card" id="map-info">
+          <h4>Situația actuală</h4>
+          <p>Parcurile Brașovului există, dar sunt complet izolate între ele. Aerul curat de pe Tâmpa nu poate pătrunde în centrul urban din cauza blocajelor create de geometria străzilor.</p>
+          <span class="map-tag">Schemă bazată pe geometria reală</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── INOVAȚIE ────────────────────────────────── -->
+<section class="sec" id="inovatie">
+  <div class="sec-blob" style="width:450px;height:450px;background:radial-gradient(ellipse,rgba(110,184,130,.09) 0%,transparent 70%);top:-100px;right:-100px;"></div>
+  <div class="sec-inner">
+    <div class="sec-eyebrow rv">05 — Elementul de inovație</div>
+    <h2 class="sec-title rv rv-d1">Ce aduce nou BioAir<br>față de <em>soluțiile existente</em>?</h2>
+    <div class="inno-grid">
+      <div class="icard rv rv-d1"><div class="icard-bar"></div>
+        <div class="icard-n">01 / Conectivitate</div>
+        <h3>Rețea biologică activă</h3>
+        <p>Primul sistem din România care conectează parcuri fragmentate într-o rețea biologică funcțională, permițând deplasarea faunei polenizatoare prin interiorul orașului.</p>
+      </div>
+      <div class="icard rv rv-d2"><div class="icard-bar"></div>
+        <div class="icard-n">02 / Ventilație</div>
+        <h3>Dirijată de geografie</h3>
+        <p>Coridoarele sunt orientate pe direcțiile de vânt, canalizând aerul curat de pe masivele muntoase spre centrul urban – avantaj natural absent în orașele de câmpie.</p>
+      </div>
+      <div class="icard rv rv-d3"><div class="icard-bar"></div>
+        <div class="icard-n">03 / Filtrare</div>
+        <h3>Trei straturi biologice</h3>
+        <p>Arbori înalți (PM2.5), arbuști (NO₂, umbrire), plante de acoperire (umidificare). Sistem superior unei simple perdele de copaci prin diversitate funcțională.</p>
+      </div>
+      <div class="icard rv rv-d1"><div class="icard-bar"></div>
+        <div class="icard-n">04 / Identitate</div>
+        <h3>„Podul Viu" – element iconic</h3>
+        <p>Un coridor supraînălțat vizitabil transformă infrastructura utilitară într-o atracție publică unică, creând identitate urbană și vizibilitate pentru întreg proiectul.</p>
+      </div>
+      <div class="icard rv rv-d2"><div class="icard-bar"></div>
+        <div class="icard-n">05 / Tehnologie</div>
+        <h3>Monitorizare și date deschise</h3>
+        <p>Senzori IoT la intrarea și ieșirea coridoarelor măsoară impactul real în timp real. Datele sunt publice – bază pentru extindere și cercetare academică.</p>
+      </div>
+      <div class="icard rv rv-d3"><div class="icard-bar"></div>
+        <div class="icard-n">06 / Scalabilitate</div>
+        <h3>Model replicabil național</h3>
+        <p>Metodologia BioAir poate fi aplicată în orice oraș românesc cu spații verzi fragmentate. Brașovul devine prototipul național pentru infrastructura verde urbană.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── IMPLEMENTARE ────────────────────────────── -->
+<section class="sec" id="implementare">
+  <div class="sec-inner">
+    <div class="sec-eyebrow rv">06 — Plan de implementare</div>
+    <h2 class="sec-title rv rv-d1">Trei faze,<br><em>un oraș transformat</em></h2>
+    <div class="impl-grid">
+      <div class="timeline rv rv-d1">
+        <div class="tphase">
+          <div class="tp-label">Faza I · 0–12 luni</div>
+          <h3>Pilot la sol</h3>
+          <p>Studiu meteorologic și cartografiere direcții de vânt. Coridor pilot Tâmpa – Parc Titulescu (~900m, Bd. Eroilor). Plantare al doilea rând de arbori + arbuști filtranți. Instalare 3 senzori calitate aer. Cost estimat: 38.000–69.000 EUR.</p>
+        </div>
+        <div class="tphase">
+          <div class="tp-label">Faza II · 1–3 ani</div>
+          <h3>Extindere rețea + Podul Viu</h3>
+          <p>Conectarea Parcului Tractorul și Parc Civic. Construcția „Podului Viu" pilot (structură modulară 50–80m). Extindere rețea senzori. Lansare platformă publică de date. Cost estimat: 180.000–280.000 EUR.</p>
+        </div>
+        <div class="tphase">
+          <div class="tp-label">Faza III · 3–7 ani</div>
+          <h3>Rețea completă + Atlas Climatic</h3>
+          <p>Conectarea integrală: Tâmpa – centru – Tractorul – Noua/Zoo. Elaborarea unui Atlas Climatic Local (model Stuttgart) care să ghideze planificările urbane viitoare ale Brașovului.</p>
+        </div>
+      </div>
+      <div class="impact-panel rv rv-d2">
+        <h3>Beneficii estimate (Faza 1+2)</h3>
+        <div class="irow"><span class="lbl">Reducere PM2.5 local</span><div><span class="val">până la 30–35%</span><div class="note">*estimare din literatură</div></div></div>
+        <div class="irow"><span class="lbl">Reducere temperatură (vară)</span><div><span class="val">−1,5 / −2°C</span><div class="note">*estimare din literatură</div></div></div>
+        <div class="irow"><span class="lbl">Lungime coridoare Faza 1+2</span><div><span class="val">~12–15 km</span></div></div>
+        <div class="irow"><span class="lbl">Populație beneficiară directă</span><div><span class="val">~60.000 loc.</span></div></div>
+        <div class="irow"><span class="lbl">Suprafață vegetație nouă</span><div><span class="val">~8–10 ha</span></div></div>
+        <div class="irow"><span class="lbl">Specii polenizatoare estimate</span><div><span class="val">40+</span></div></div>
+        <p class="impact-disc">* Estimări bazate pe studii peer-reviewed internaționale (ScienceDirect, PMC, EBRD GreenCities). Valorile precise necesită modelare CFD locală realizată în Faza 1.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── BUGET ──────────────────────────────────── -->
+<section class="sec" id="buget">
+  <div class="sec-inner">
+    <div class="sec-eyebrow rv">07 — Bugetul estimativ</div>
+    <h2 class="sec-title rv rv-d1">Resurse necesare:<br><em>Faza pilot</em></h2>
+    <div class="budget-grid">
+      <div class="rv rv-d1">
+        <table class="bt">
+          <thead>
+            <tr><th>Categorie</th><th>Detalii</th><th>Estimare (EUR)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Studiu de fezabilitate</td><td>Cartografiere vânt, modelare, analiză aer</td><td>8.000–15.000</td></tr>
+            <tr><td>Material vegetal</td><td>Arbori (50–80 buc.), arbuști, plante acoperire</td><td>12.000–20.000</td></tr>
+            <tr><td>Infrastructură sol</td><td>Pregătire teren, substraturi, irigare</td><td>10.000–18.000</td></tr>
+            <tr><td>Senzori monitorizare</td><td>3–5 stații calitate aer + IoT</td><td>5.000–10.000</td></tr>
+            <tr><td>Comunicare și educație</td><td>Panouri, platformă date, ateliere</td><td>3.000–6.000</td></tr>
+          </tbody>
+          <tfoot>
+            <tr><td colspan="2"><strong>TOTAL Faza 1 (fără Podul Viu)</strong></td><td><strong>38.000–69.000 EUR</strong></td></tr>
+          </tfoot>
+        </table>
+        <p class="budget-note">Buget orientativ pentru coridorul pilot de ~900m la sol. Podul Viu (Faza 2, est. 30.000–60.000 EUR) este separat. Valorile reale se stabilesc prin studiu de fezabilitate și licitație publică.</p>
+      </div>
+      <div class="funding rv rv-d2">
+        <h3>Surse de finanțare</h3>
+        <div class="f-item"><div class="f-dot"></div><p><strong>FEDR 2021–2027</strong>Programe axate pe biodiversitate urbană și adaptare climatică – aplicabil direct pentru BioAir.</p></div>
+        <div class="f-item"><div class="f-dot"></div><p><strong>Programul LIFE al UE</strong>Finanțare directă pentru calitate aer și biodiversitate – Brașovul îndeplinește deja criteriile de eligibilitate.</p></div>
+        <div class="f-item"><div class="f-dot"></div><p><strong>Buget local Brașov (PAED)</strong>Planul de Acțiune pentru Energie Durabilă și Climă, la care Brașovul este semnatară.</p></div>
+        <div class="f-item"><div class="f-dot"></div><p><strong>Parteneriate private (CSR)</strong>Companii locale din turism, imobiliare și tehnologie cu angajamente publice de sustenabilitate.</p></div>
+        <div class="f-item"><div class="f-dot"></div><p><strong>Finanțare civică</strong>Implicarea cetățenilor în cofinanțarea unui element identitar al orașului.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── REFERINȚE ───────────────────────────────── -->
+<section class="sec" id="referinte">
+  <div class="sec-inner">
+    <div class="sec-eyebrow rv">Referințe științifice</div>
+    <h2 class="sec-title rv rv-d1">Surse și<br><em>documentație</em></h2>
+    <div class="refs-grid">
+      <div class="ref-item rv rv-d1"><strong>Poluare Brașov – date monitorizare</strong>IQAir, „Brasov Air Quality Map", date istorice PM2.5 2018–2024. <a href="https://www.iqair.com/air-quality-map/romania/brasov/brasov" target="_blank">iqair.com →</a></div>
+      <div class="ref-item rv rv-d2"><strong>Studiu peer-reviewed poluare Brașov</strong>Hemerean et al. (2023), Heliyon / ScienceDirect. PM10 urban +25% vs. suburban Brașov, traficul ca sursă principală.</div>
+      <div class="ref-item rv rv-d1"><strong>Model Stuttgart (referință principală)</strong>EEA Climate-ADAPT; EBRD GreenCities (2022). Ventilation corridors Stuttgart. <a href="https://climate-adapt.eea.europa.eu" target="_blank">climate-adapt.eea.europa.eu →</a></div>
+      <div class="ref-item rv rv-d2"><strong>Coridoare de ventilație – metodologie</strong>Zhang et al. (2025), Scientific Reports / Nature. Extracție inteligentă coridoare de ventilație urbană. <a href="https://www.nature.com/articles/s41598-025-01804-7" target="_blank">nature.com →</a></div>
+      <div class="ref-item rv rv-d1"><strong>Infrastructură verde pentru calitatea aerului</strong>Abhijith et al. (2019), Atmosphere, PMC/NCBI. „Using green infrastructure to improve urban air quality". <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6889104/" target="_blank">ncbi.nlm.nih.gov →</a></div>
+      <div class="ref-item rv rv-d2"><strong>Brașov – energie verde 100%</strong>TheMayor.EU (2021). „Brasov first Romanian municipality to use 100% green energy". <a href="https://www.themayor.eu/en/a/view/brasov-will-be-the-first-romanian-municipality-to-use-100-green-energy-starting-2022-9521" target="_blank">themayor.eu →</a></div>
+      <div class="ref-item rv rv-d1"><strong>Proiectarea coridoarelor verzi urbane</strong>NetZeroCities (2024), „Green corridors for active and cooler mobility"; Natural Walking Cities (2020).</div>
+      <div class="ref-item rv rv-d2"><strong>Parcuri Brașov – date oficiale</strong>Primăria Municipiului Brașov, „Parcuri și zone de agrement". <a href="https://www.brasovcity.ro/ro/agrement" target="_blank">brasovcity.ro →</a></div>
+    </div>
+    <p class="ref-disc rv rv-d1">Toate datele utilizate provin din surse verificabile: studii peer-reviewed, agenții europene oficiale, date de monitorizare ANPM. Estimările de impact sunt marcate explicit și necesită modelare locală pentru confirmare precisă. Hărțile sunt schematice, bazate pe geometria reală a orașului, nu pe GIS oficial.</p>
+  </div>
+</section>
+
+<!-- ── CTA ────────────────────────────────────── -->
+<section id="cta">
+  <div class="cta-in rv">
+    <h2>Brașovul poate deveni<br><em>un model național</em></h2>
+    <p>BioAir nu este o idee abstractă. Este un plan fezabil, fundamentat științific, inspirat din decenii de practică europeană și adaptat la realitatea Brașovului. Primul pas este un coridor pilot de 900m.</p>
+    <div class="cta-btns">
+      <a href="#problema" class="cta-btn-ghost">Recitește proiectul</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── INFO PROIECT ────────────────────────────── -->
+<section id="info-proiect">
+  <div class="info-card">
+    <div class="info-row">
+      <span class="info-lbl">Numele elevului</span>
+      <span class="info-val">Bordea David</span>
+    </div>
+    <div class="info-row">
+      <span class="info-lbl">Profesor coordonator</span>
+      <span class="info-val">Dr. Ing. Tulică Alexandru Constantin</span>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>BioAir Brașov · Concurs Regional FHADR USAMV Cluj-Napoca · 2026</p>
+  <p>Secțiune: Idei sustenabile pentru dezvoltarea comunității</p>
+  <p>Model 3D: <a href="https://sketchfab.com/3d-models/beech-tree-0983d8933531491f9be71c669e8a907b" target="_blank" rel="noopener" style="color:inherit;opacity:.7;">Beech Tree</a> de evolveduk · licență CC-BY-4.0</p>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<script src="https://unpkg.com/three@0.134.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
