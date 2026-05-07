@@ -308,7 +308,7 @@ function swMap(which, btn) {
     threeScene = new THREE.Scene();
     // Fog color matches page background (rgb 245,243,238 ≈ 0xf5f3ee); linear, starts
     // just in front of tree so depth Z-layers fade naturally toward far end
-    threeScene.fog = new THREE.Fog(0xd8e6f0, 3.2, 7.5);
+    threeScene.fog = new THREE.Fog(0xdce8ee, 4.2, 9.0);
     // Group holds all tree geometry — scale reveal applied here each frame.
     // Lights stay in threeScene so they are unaffected by group scale.
     treeGroup = new THREE.Group();
@@ -322,17 +322,17 @@ function swMap(which, btn) {
     threeCamera.position.set(0, 0.5, 5.2);
     threeCamera.lookAt(0, 0.5, 0);
 
-    // Ambient: raised so GLTF shadow areas are readable; directionals still define form
-    threeScene.add(new THREE.AmbientLight(0xd8ecd0, 0.50));
+    // Ambient: sky-blue tint so shadow areas read as open-sky lit, not green undergrowth
+    threeScene.add(new THREE.AmbientLight(0xd0e8f8, 0.48));
 
-    // Key light — warm, upper-left-front; primary source of highlights on branches
+    // Key light — warm, upper-right-front; matches canvas sun bloom at W*0.74
     const keyLight = new THREE.DirectionalLight(0xfff4d8, 1.30);
-    keyLight.position.set(-2.0, 4.0, 2.0);
+    keyLight.position.set(2.0, 4.5, 2.0);
     threeScene.add(keyLight);
 
-    // Fill light — cool, from right at mid-height; softens key-side shadows
-    const fillLight = new THREE.DirectionalLight(0xbcdaf0, 0.52);
-    fillLight.position.set(2.8, 0.8, 1.5);
+    // Fill light — cool sky, from left at mid-height; opposes key, lifts shadow side
+    const fillLight = new THREE.DirectionalLight(0xbcdaf0, 0.48);
+    fillLight.position.set(-2.2, 1.8, 1.0);
     threeScene.add(fillLight);
 
     // Rim light — very low, from behind; outlines tips against background
@@ -441,15 +441,15 @@ function swMap(which, btn) {
     const DEFS = [
       // Left wing — mid-distance
       [-3.5, -2.0, 0.70, 1.50, 0.75, 0xc8ccd4],
-      [-4.2, -0.6, 0.55, 1.05, 0.60, 0xcacec8],
+      [-4.2, -0.6, 0.55, 1.05, 0.60, 0xd0c6b0],
       [-2.8, -3.2, 0.85, 2.00, 0.70, 0xbfc4ce],
-      [-5.2, -1.8, 0.60, 1.30, 0.55, 0xc2c7d0],
+      [-5.2, -1.8, 0.60, 1.30, 0.55, 0xccbfa8],
       [-3.2, -4.5, 0.75, 0.85, 0.80, 0xbdc2cb],
       // Right wing — mid-distance
       [ 3.3, -2.0, 0.70, 1.75, 0.75, 0xc5cad2],
-      [ 4.0, -0.6, 0.55, 1.10, 0.60, 0xcbcfc6],
+      [ 4.0, -0.6, 0.55, 1.10, 0.60, 0xcec8b2],
       [ 2.7, -3.2, 0.85, 1.55, 0.70, 0xbec3cd],
-      [ 5.0, -1.8, 0.60, 1.00, 0.55, 0xc0c6cf],
+      [ 5.0, -1.8, 0.60, 1.00, 0.55, 0xc8c0ac],
       [ 3.8, -4.5, 0.80, 2.20, 0.85, 0xbac0ca],
       // Center background — tall silhouettes deep in fog
       [-0.5, -4.5, 1.10, 2.50, 0.95, 0xbec5ce],
@@ -465,7 +465,7 @@ function swMap(which, btn) {
 
     DEFS.forEach(function(def) {
       const geo  = new THREE.BoxGeometry(def[2], def[3], def[4]);
-      const mat  = new THREE.MeshStandardMaterial({ color: def[5], roughness: 0.92 });
+      const mat  = new THREE.MeshStandardMaterial({ color: def[5], roughness: 0.92, metalness: 0.06 });
       const mesh = new THREE.Mesh(geo, mat);
       // Base at world ground; center geometry at half-height above ground
       mesh.position.set(def[0], GY + def[3] * 0.5, def[1]);
@@ -798,8 +798,8 @@ function swMap(which, btn) {
     } else if (sim.p < 0.72) {
       const t3 = (sim.p - 0.52) / 0.20;
       camRadius = lerp(3.6, 4.4, easeOut(t3));
-      camY      = lerp(4.5, 1.0, easeOut(t3));
-      lookY     = lerp(1.4, 1.0, easeOut(t3));
+      camY      = lerp(4.5, 1.0, easeInOut(t3));
+      lookY     = lerp(1.4, 1.0, easeInOut(t3));
     } else {
       const t3 = (sim.p - 0.72) / 0.28;
       camRadius = 4.4;
@@ -884,12 +884,12 @@ function swMap(which, btn) {
     // Blue tint strengthens gently as scene cleans and overhead phase activates.
     const g = ctx.createLinearGradient(0, 0, 0, H * 0.82);
     g.addColorStop(0,
-      `rgb(${Math.round(lerp(lerp(215,205,p), 200, ovhd * 0.30))},` +
-      `${Math.round(lerp(lerp(228,232,p), 218, ovhd * 0.22))},` +
+      `rgb(${Math.round(lerp(lerp(200,190,p), 185, ovhd * 0.30))},` +
+      `${Math.round(lerp(lerp(216,220,p), 206, ovhd * 0.22))},` +
       `${Math.round(lerp(lerp(246,255,p), 238, ovhd * 0.22))})`
     );
-    g.addColorStop(0.42,
-      `rgb(${Math.round(lerp(240,234,p))},${Math.round(lerp(239,244,p))},${Math.round(lerp(235,239,p))})`
+    g.addColorStop(0.58,
+      `rgb(${Math.round(lerp(220,212,p))},${Math.round(lerp(230,236,p))},${Math.round(lerp(242,246,p))})`
     );
     g.addColorStop(1,
       `rgb(${Math.round(lerp(238,228,p))},${Math.round(lerp(235,242,p))},${Math.round(lerp(228,232,p))})`
@@ -898,7 +898,7 @@ function swMap(which, btn) {
     ctx.fillRect(0, 0, W, H);
 
     // Warm sunlight bloom — upper-right, soft gold, diffused morning light
-    const sunA = 0.046 + cleanGlow * 0.028;
+    const sunA = 0.068 + cleanGlow * 0.034;
     const sunR = ctx.createRadialGradient(W * 0.74, H * 0.05, 0, W * 0.74, H * 0.05, W * 0.44);
     sunR.addColorStop(0,    `rgba(255,240,195,${sunA})`);
     sunR.addColorStop(0.50, `rgba(255,230,165,${sunA * 0.30})`);
