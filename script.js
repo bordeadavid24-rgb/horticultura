@@ -189,18 +189,19 @@ if (prefersReduced) {
 
 /* ─── MAP SWITCH ─────────────────────────── */
 function swMap(which, btn) {
-  document.getElementById('sv-before').style.display = which === 'before' ? 'block' : 'none';
-  document.getElementById('sv-after').style.display  = which === 'after'  ? 'block' : 'none';
+  // Toggle SVG corridor overlay via CSS class (smooth 0.55s fade)
+  const overlay = document.getElementById('map-overlay');
+  if (overlay) overlay.classList.toggle('active', which === 'after');
   document.querySelectorAll('.mtab').forEach(b => b.classList.remove('on'));
   btn.classList.add('on');
   const info = document.getElementById('map-info');
   const cap  = document.getElementById('map-cap');
   if (which === 'before') {
-    info.innerHTML = '<h4>Situația actuală</h4><p>Parcurile Brașovului există, dar sunt complet izolate între ele. Aerul curat de pe Tâmpa nu poate pătrunde în centrul urban.</p><span class="map-tag">Schemă bazată pe geometria reală</span>';
-    cap.textContent = 'Schemă schematică bazată pe geometria reală a Brașovului · Parcuri în poziții aproximative · Nu reprezintă GIS oficial';
+    info.innerHTML = '<h4>Situația actuală</h4><p>Parcurile Brașovului există, dar sunt complet izolate. Aerul curat de pe Tâmpa și Postăvarul nu poate pătrunde în centrul urban din cauza fragmentării urbane.</p><span class="map-tag">Imagine satelit reală · Brașov</span>';
+    cap.textContent = 'Imagine satelit Brașov · Parcuri izolate, fără conexiuni biologice · Nu reprezintă GIS oficial';
   } else {
-    info.innerHTML = '<h4>După BioAir</h4><p>5 coridoare verzi conectează Tâmpa, Titulescu, Tractorul, Parc Civic și Zoo/Noua într-o rețea biologică activă. Aerul curat este dirijat spre centrul urban.</p><span class="map-tag">Rețeaua completă Faza 1+2</span>';
-    cap.textContent = 'Rețeaua BioAir – 5 coridoare principale · ~12–15 km vegetație activă · Săgețile indică fluxul de aer curat';
+    info.innerHTML = '<h4>După BioAir</h4><p>6 coridoare verzi conectează Tâmpa, Postăvarul, Titulescu, Tractorul, Centru Civic și Noua/Zoo într-o rețea biologică activă. Aerul curat este dirijat spre centrul urban.</p><span class="map-tag">Rețeaua BioAir · Faza 1+2+3</span>';
+    cap.textContent = 'Coridoarele BioAir propuse · ~15 km vegetație activă · Pozițiile sunt aproximative · Imagine satelit reală';
   }
 }
 
@@ -232,9 +233,19 @@ function swMap(which, btn) {
   let p = 0;
   let t = 0; // seconds — drives time-based animation independent of scroll
 
+  let _vignGrad = null, _bFadeGrad = null;
   function resize() {
     canvas.width  = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
+    // Rebuild static gradients — canvas resize resets context state so these must
+    // be recreated. They're constant between resizes so we cache and reuse each frame.
+    const W = canvas.width, H = canvas.height;
+    _vignGrad = ctx.createRadialGradient(W*.5, H*.45, Math.min(W,H)*.3, W*.5, H*.45, Math.min(W,H)*.85);
+    _vignGrad.addColorStop(0, 'transparent');
+    _vignGrad.addColorStop(1, 'rgba(245,243,238,0.28)');
+    _bFadeGrad = ctx.createLinearGradient(0, H*.78, 0, H);
+    _bFadeGrad.addColorStop(0, 'transparent');
+    _bFadeGrad.addColorStop(1, 'rgba(245,243,238,0.42)');
   }
   resize();
   window.addEventListener('resize', () => { resize(); drawFrame(simulate(p, t)); });
@@ -373,9 +384,9 @@ function swMap(which, btn) {
     flowGeo = new THREE.BufferGeometry();
     flowGeo.setAttribute('position', new THREE.BufferAttribute(flowBuf, 3));
     threeFlow = new THREE.LineSegments(flowGeo, new THREE.LineBasicMaterial({
-      color: 0xaaccb8, opacity: 0.11, transparent: true, fog: true, depthWrite: false
+      color: 0xaaccb8, opacity: 0.0, transparent: true, fog: true, depthWrite: false
     }));
-    treeGroup.add(threeFlow);
+    threeScene.add(threeFlow);  // world space — not scaled with treeGroup
 
     // Wisp properties — one seeded LCG run at init, never touched again.
     // First 62% are canopy-biased (Y ∈ [0.1, 1.4]) for density near leaf clusters.
@@ -691,6 +702,7 @@ function swMap(which, btn) {
   }
 
   function renderThree(sim) {
+    if (!threeCanvas.parentElement.clientWidth) return;  // display:none on mobile (≤860px)
     if (!treeBeech) {
       // ── Procedural tree — active only before GLTF model loads ──────────────
       threeTrunk.scale.y = 0.05 + sim.trunkGrowth * 0.95;
@@ -745,25 +757,23 @@ function swMap(which, btn) {
     }
 
     // Update airflow wisps — two sub-segments per wisp (left→mid, mid→right).
-    // The midpoint arcs upward inside the canopy X zone, simulating flow deflected
-    // by the leaf mass. Arc is always ≥ 0 (air lifts over the dome, never pushes down).
+    // Wisps live in scene space (not treeGroup) so they stay at world scale through
+    // the full sapling→tree growth arc. _yOff aligns baseY with treeGroup's world Y.
     const _fp   = flowGeo.attributes.position.array;
     const _trav = 7.0;
+    const _yOff = -0.4;  // treeGroup.position.y — maps local baseY coords to world Y
     for (let i = 0; i < FLOW_N; i++) {
       const fd  = flowData[i];
       const cx  = (sim.t * fd.speed + fd.phase) % _trav - _trav * 0.5;
       const xl  = cx - fd.halfLen;
       const xr  = cx + fd.halfLen;
 
-      // Per-wisp vertical undulation — slow, independent of canopy
-      const yBase = fd.baseY + fd.vy * Math.sin(sim.t * fd.vFreq + fd.phase);
+      const yBase = fd.baseY + _yOff + fd.vy * Math.sin(sim.t * fd.vFreq + fd.phase);
 
-      // Canopy arc at midpoint: strongest when cx is near tree center (|cx| < 1.1),
-      // only for wisps already in canopy Y band. Oscillates gently so it reads as
-      // living breath rather than a fixed deflector shape.
+      // Arc grows with canopy — no deflection at sapling, readable lift at mature crown.
       const cxFactor = Math.max(0, 1.0 - Math.abs(cx) / 1.1);
       const cyFactor = fd.baseY > 0.1 && fd.baseY < 1.5 ? 1.0 : 0.25;
-      const arc = cxFactor * cyFactor * (0.04 + 0.03 * Math.sin(sim.t * 0.32 + fd.phase * 1.4));
+      const arc = cxFactor * cyFactor * sim.branchProg * (0.10 + 0.06 * Math.sin(sim.t * 0.32 + fd.phase * 1.4));
 
       const yL = yBase + fd.dy * (-fd.halfLen);
       const yM = yBase + arc;
@@ -776,6 +786,8 @@ function swMap(which, btn) {
       _fp[b +  9] = xr;  _fp[b + 10] = yR;  _fp[b + 11] = fd.z;  // right
     }
     flowGeo.attributes.position.needsUpdate = true;
+    // Opacity tracks canopy maturity — invisible at sapling, soft blue-green at full crown
+    threeFlow.material.opacity = easeOut(sim.branchProg) * 0.20;
 
     // Scroll-driven orbital camera — ~1.25 turn orbit, sculpted Y for overhead shot.
     // Phase 0 (p 0.00→0.22): entry low and wide, sapling grows from ground.
@@ -1054,15 +1066,34 @@ function swMap(which, btn) {
     const W = canvas.width, H = canvas.height;
     const camAngle  = -0.3 + sim.p * Math.PI * 2.5;
     const axisShift = Math.sin(camAngle) * W * 0.08;
-    for (let i = 0; i < 7; i++) {
-      const yb = H * .2 + i * H * .058;
-      const a = flowIntensity * .16 * (0.5 + 0.5 * Math.sin(flowTime + i * .9));
-      ctx.strokeStyle = `rgba(65,130,90,${a * 1.3})`;
-      ctx.lineWidth = 1; ctx.setLineDash([7, 13]);
-      ctx.lineDashOffset = -(flowTime * 55 + i * 18) % 20;
+    // Tree center X projected onto canvas — arcs converge here from both city edges.
+    const treeCX = W * 0.5 + axisShift;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 9]);
+    for (let i = 0; i < 6; i++) {
+      const yb  = H * .22 + i * H * .060;
+      const a   = flowIntensity * .11 * (0.5 + 0.5 * Math.sin(flowTime + i * .9));
+      const col = `rgba(65,130,90,${a.toFixed(3)})`;
+      ctx.strokeStyle = col;
+      // Left arc: city edge → tree canopy — air drawn inward toward the canopy
+      ctx.lineDashOffset = -(flowTime * 42 + i * 17) % 13;
       ctx.beginPath();
-      ctx.moveTo(W * .04, yb + Math.sin(flowTime + i) * 7);
-      ctx.bezierCurveTo(W * .25 + axisShift * 0.4, yb - 14, W * .5 + axisShift, yb + 9, W * .96, yb + Math.sin(flowTime + i + 1) * 5);
+      ctx.moveTo(W * .04, yb + Math.sin(flowTime + i) * 6);
+      ctx.bezierCurveTo(
+        lerp(W * .04, treeCX, .36), yb - 12,
+        lerp(W * .04, treeCX, .78), yb - 7,
+        treeCX, yb - 3
+      );
+      ctx.stroke();
+      // Right arc: city edge → tree canopy (mirror)
+      ctx.lineDashOffset = -(flowTime * 42 + i * 17 + 6) % 13;
+      ctx.beginPath();
+      ctx.moveTo(W * .96, yb + Math.sin(flowTime + i + 1) * 6);
+      ctx.bezierCurveTo(
+        lerp(W * .96, treeCX, .36), yb - 12,
+        lerp(W * .96, treeCX, .78), yb - 7,
+        treeCX, yb - 3
+      );
       ctx.stroke();
     }
     ctx.setLineDash([]); ctx.lineDashOffset = 0;
@@ -1122,9 +1153,9 @@ function swMap(which, btn) {
       const cP = easeOut(clamp((corridorProg - i * .18) * 1.6, 0, 1));
       if (cP < .01) return;
       const curX = lerp(c.sx, c.ex, cP), curY = lerp(c.sy, c.ey, cP);
-      const cp1x = lerp(c.sx, c.ex, .3), cp1y = c.sy - 44;
+      const cp1x = lerp(c.sx, c.ex, .3), cp1y = c.sy - H * 0.075;
       ctx.strokeStyle = `rgba(80,160,100,${cP * .42})`;
-      ctx.lineWidth = 8; ctx.lineCap = 'round';
+      ctx.lineWidth = 5; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.moveTo(c.sx, c.sy);
       ctx.quadraticCurveTo(cp1x, cp1y, curX, curY); ctx.stroke();
       ctx.strokeStyle = `rgba(55,135,80,${cP * .80})`;
@@ -1215,24 +1246,28 @@ function swMap(which, btn) {
 
     drawCorridors(sim, cx, gY);
 
-    // Edge vignette — blends canvas into page background
-    const vign = ctx.createRadialGradient(W * .5, H * .45, Math.min(W, H) * .3, W * .5, H * .45, Math.min(W, H) * .85);
-    vign.addColorStop(0, 'transparent');
-    vign.addColorStop(1, `rgba(245,243,238,0.28)`);
-    ctx.fillStyle = vign; ctx.fillRect(0, 0, W, H);
-    // Bottom fade — softer transition to page content below
-    const bFade = ctx.createLinearGradient(0, H * .78, 0, H);
-    bFade.addColorStop(0, 'transparent');
-    bFade.addColorStop(1, `rgba(245,243,238,0.42)`);
-    ctx.fillStyle = bFade; ctx.fillRect(0, H * .78, W, H * .22);
+    // Edge vignette + bottom fade — pre-baked in resize(), reused each frame
+    if (_vignGrad)  { ctx.fillStyle = _vignGrad;  ctx.fillRect(0, 0, W, H); }
+    if (_bFadeGrad) { ctx.fillStyle = _bFadeGrad; ctx.fillRect(0, H * .78, W, H * .22); }
   }
 
+  // Visibility gate — stops the RAF loop when #tree-section is off-screen.
+  // Saves full CPU+GPU cost when the user is in other sections (hero, map, etc.).
+  let _rafId = null;
+  let _treeVisible = true; // true on init so loop() below starts normally
+  new IntersectionObserver(function(es) {
+    _treeVisible = es[0].isIntersecting;
+    if (_treeVisible && _rafId === null) { _rafId = requestAnimationFrame(loop); }
+  }, { threshold: 0 }).observe(section);
+
   function loop() {
+    _rafId = null;
+    if (!_treeVisible) return;          // pause when tree section is off-screen
     t = performance.now() * 0.001;
     const sim = simulate(p, t);
     drawFrame(sim);
     renderThree(sim);
-    requestAnimationFrame(loop);
+    _rafId = requestAnimationFrame(loop);
   }
 
   /* ── ScrollTrigger drives p; RAF draws each frame ── */

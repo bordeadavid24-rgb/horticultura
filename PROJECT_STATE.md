@@ -1,57 +1,75 @@
 # BioAir Brașov — Project State
-> Last updated: 2026-05-06 (session 34)
+> Last updated: 2026-05-10 (session 40 — mobile responsiveness pass)
 
 ## Files
 ```
 index.html         markup + layout wrapper
-style.css          ~1170 lines
-script.js          ~1230 lines
+style.css          ~1270 lines
+script.js          ~1280 lines
 assets/beech_tree/ scene.gltf · scene.bin · textures/ (6 PNGs) · license.txt
+assets/map/        brasov-base.jpg
+assets/podul-viu/  podul-viu.png
 ```
 No build tools. Serve via VS Code Live Server or `python -m http.server`.  
 CDN: Google Fonts · GSAP 3.12.5 + ScrollTrigger · Three.js r134 · GLTFLoader r134.
 
 ---
 
-## What Changed This Session
-
-**Phase 4E — lightweight procedural 3D city added to Three.js scene (script.js)**
-
-### 3D city group (`cityGroup`)
-- `cityGroup` declared alongside existing Three.js variables (`threeFlow`, `groundShadow`, etc.)
-- `buildCity3D()` IIFE runs synchronously after `initThree()`, before the ResizeObserver
-- 18 `BoxGeometry` buildings placed in `threeScene` (not `treeGroup`) so world-scale is fixed while the tree scales up with scroll
-- ~216 triangles total — no measurable performance impact
-- Buildings arranged in four groups:
-  - **Left/right wings** — radius 2.8–5.2, Z −0.6 to −4.5 (mid-fog, visible during orbit)
-  - **Center background** — Z −4.5 to −6.5 (tower silhouettes, deep fog)
-  - **Far sides** — X ±5.5–6.5, visible during the 2.5-turn overhead orbit
-- All buildings: `MeshStandardMaterial`, `roughness: 0.92`, soft blue-gray palette (`0xb3bac3`–`0xcbcfc6`)
-- Ground-aligned: `position.y = −0.40 + height/2` (matches `treeGroup.position.y`)
-
-### 2D city buildings suppressed when Three.js active
-- `drawCity()` building `forEach` wrapped in `if (!threeRenderer)` — same pattern as 2D tree suppression
-- Canvas sky, ground gradient, road, dashes, mountain, horizon haze: all preserved and always drawn
-
-### Preserved
-- `simulate(p, t)` — untouched
-- Canvas fallback: if `threeRenderer` undefined, 2D buildings draw normally
-- GLTF fallback: if beech fails, procedural Three.js tree + 3D city still render
-- All other draw functions untouched
-
----
-
 ## Current State
 
-Phase 4E prototype complete. The Three.js scene now contains a lightweight procedural city of 18 low-poly buildings that share the same camera as the beech tree. As the camera orbits and rises overhead (`p ≈ 0.3–0.5`), buildings emerge from the scene fog as soft atmospheric silhouettes — proper 3D perspective, foreshortening, and depth. The 2D canvas provides sky, ground, road, and atmosphere; the 3D city provides building geometry. Not yet browser-verified.
+**All major features complete. Site is visually verified and presentation-ready.**
+
+Section flow:
+```
+3D Intro (tree scroll, 660vh)
+→ Post-tree landing
+→ Hero
+→ 01 Problema
+→ 02 Soluția
+→ 03 Fezabilitate
+→ 04 Hartă (satellite + BioAir overlay)
+→ 05 Inovație (6 cards)
+→ Podul Viu (image section, Pilot · Faza II)
+→ 06 Implementare (timeline + impact panel)
+→ 07 Buget (table + funding sources)
+→ Referințe
+→ CTA
+→ Info proiect + Footer
+```
 
 ---
 
-## Next Step
+## What Changed This Session (Phase 8 + Phase 9)
 
-**Phase 4E browser verification:**
-1. Open in Live Server / `python -m http.server`.
-2. Scroll through the full tree section — confirm 3D buildings appear during the overhead camera phase (`p ≈ 0.4–0.5`).
-3. Check that buildings feel like soft background (not Minecraft) — adjust `DEFS` Z-values or heights in [script.js:441](script.js#L441) if needed.
-4. Confirm no console errors and no visible 2D building rectangles when Three.js is active.
-5. After sign-off: consider per-frame `greenTint` color shift on buildings (Phase 4F), or a subtle ground plane mesh to anchor the city to the tree's base.
+### Phase 8 — Podul Viu section
+
+- New `<section id="podul-viu">` inserted between `#inovatie` and `#implementare`
+- Layout: two-column grid (image 1.1fr / text 1fr), dark background (`--bg-deep`)
+- Left: `assets/podul-viu/podul-viu.png` in a rounded `aspect-ratio: 4/3` container with caption overlay
+- Right: lead paragraph + 3 labeled rows (Structură / Vegetație / Impact) with hairline borders
+- All elements carry `.rv` class — picked up by existing `ScrollTrigger.batch` in script.js
+- New CSS block: `.pv-layout`, `.pv-img-wrap`, `.pv-img`, `.pv-img-caption`, `.pv-content`, `.pv-lead`, `.pv-points`, `.pv-pt`, `.pv-pt-label`, `.pv-pt-text`
+- Mobile breakpoint: `.pv-layout` added to the `grid-template-columns:1fr` rule at ≤900px
+
+### Phase 9 — Design polish
+
+- **`#implementare` background**: now starts `bg-deep → bg-page` in first 5%, creating a seamless visual bridge from the dark Podul Viu section above
+- **Map legend**: removed 2 obsolete items ("Podul Viu pilot", "Zonă poluată") that were relics of the old schematic SVG; legend now shows only Parc / nod verde · Coridor verde BioAir · Tâmpa / Postăvarul
+- **Nav**: added "Podul Viu" link between Inovație and Plan
+- **CTA**: added "Explorează harta →" fill button alongside the existing ghost button — two-button layout, balanced
+- **Budget note**: `font-size: .62rem italic` → `.66rem` non-italic; easier to read
+- **`#info-proiect`**: top padding `3rem → 4rem` for breathing room after dark CTA
+- **Podul Viu blob**: opacity `0.07 → 0.14` (more visible on dark background)
+
+### Untouched throughout all phases
+- `simulate(p, t)` — never modified
+- Canvas 2D system, Three.js renderer, GLTF loader, procedural fallbacks
+- IntersectionObserver RAF gate, ResizeObserver, pixel-ratio cap
+- `assets/beech_tree/` — intact
+
+---
+
+## Next Steps (optional)
+
+- **Performance profile**: DevTools Performance tab on the tree scroll section (not done since Phase 6A)
+- **Mobile navigation**: nav links are hidden at ≤900px with no hamburger; acceptable for presentation but not for public launch

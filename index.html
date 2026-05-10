@@ -58,6 +58,7 @@
     <li><a href="#fezabilitate">Fezabilitate</a></li>
     <li><a href="#harta">Hartă</a></li>
     <li><a href="#inovatie">Inovație</a></li>
+    <li><a href="#podul-viu">Podul Viu</a></li>
     <li><a href="#implementare">Plan</a></li>
     <li><a href="#buget">Buget</a></li>
     <li><a href="#referinte">Referințe</a></li>
@@ -307,7 +308,7 @@
         </div>
         <div class="fez-item">
           <div class="fez-badge gold">C</div>
-          <p><strong>„Podul Viu" – coridor supraînălțat pilot</strong>O structură modulară ușoară (oțel + substrat vegetal) deasupra unui bulevard, 50–80m. Precedente similare: Singapore (Park Connector Network) și Paris (Promenade Plantée).</p>
+          <p><strong>„Podul Viu" – coridor supraînălțat pilot</strong>O structură modulară ușoară (oțel + substrat vegetal) deasupra unui bulevard, 50–80m. Precedente similare: Singapore (Park Connector Network) și Paris (Promenade Plantée). Conceptul este prezentat detaliat în secțiunea dedicată.</p>
         </div>
         <div class="fez-note">
           <p>Coridoarele la sol sunt realizabile cu <strong>tehnologie standard de peisagistică urbană</strong>, la costuri comparabile cu reabilitarea unui trotuar, fără modificări ale structurii străzilor.</p>
@@ -331,169 +332,72 @@
           <button class="mtab"    id="ma" onclick="swMap('after',this)">După BioAir</button>
         </div>
         <div class="map-canvas">
-          <!-- BEFORE -->
-          <svg id="sv-before" viewBox="0 0 760 440" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="pg" width="24" height="24" patternUnits="userSpaceOnUse">
-                <path d="M24 0L0 0 0 24" fill="none" stroke="rgba(78,154,94,0.07)" stroke-width="0.5"/>
-              </pattern>
-              <radialGradient id="rPoll" cx="50%" cy="52%" r="42%">
-                <stop offset="0%" stop-color="rgba(180,80,40,0.14)"/>
-                <stop offset="100%" stop-color="transparent"/>
-              </radialGradient>
-            </defs>
-            <rect width="760" height="440" fill="#f0ede5"/>
-            <rect width="760" height="440" fill="url(#pg)"/>
-            <!-- Mountains -->
-            <ellipse cx="82" cy="192" rx="76" ry="62" fill="rgba(61,122,74,0.18)" stroke="rgba(61,122,74,0.4)" stroke-width="1.2"/>
-            <text x="82" y="188" text-anchor="middle" fill="#2d5a36" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="600">TÂMPA</text>
-            <text x="82" y="199" text-anchor="middle" fill="#4e9a5e" font-family="JetBrains Mono,monospace" font-size="7">pădure</text>
-            <ellipse cx="638" cy="76" rx="106" ry="58" fill="rgba(61,122,74,0.18)" stroke="rgba(61,122,74,0.4)" stroke-width="1.2"/>
-            <text x="638" y="73" text-anchor="middle" fill="#2d5a36" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="600">POSTĂVARUL</text>
-            <text x="638" y="84" text-anchor="middle" fill="#4e9a5e" font-family="JetBrains Mono,monospace" font-size="7">masiv împădurit</text>
-            <!-- City grid -->
-            <rect x="225" y="140" width="310" height="210" fill="rgba(200,195,185,0.35)" stroke="rgba(150,140,120,0.2)" stroke-width="0.5" rx="2"/>
-            <g stroke="rgba(140,130,110,0.25)" stroke-width="0.5">
-              <line x1="260" y1="140" x2="260" y2="350"/><line x1="298" y1="140" x2="298" y2="350"/>
-              <line x1="334" y1="140" x2="334" y2="350"/><line x1="370" y1="140" x2="370" y2="350"/>
-              <line x1="406" y1="140" x2="406" y2="350"/><line x1="442" y1="140" x2="442" y2="350"/>
-              <line x1="478" y1="140" x2="478" y2="350"/><line x1="514" y1="140" x2="514" y2="350"/>
-              <line x1="225" y1="172" x2="535" y2="172"/><line x1="225" y1="204" x2="535" y2="204"/>
-              <line x1="225" y1="236" x2="535" y2="236"/><line x1="225" y1="268" x2="535" y2="268"/>
-              <line x1="225" y1="300" x2="535" y2="300"/><line x1="225" y1="332" x2="535" y2="332"/>
-            </g>
-            <!-- Boulevard -->
-            <line x1="150" y1="224" x2="610" y2="224" stroke="rgba(180,150,60,0.4)" stroke-width="2.5"/>
-            <text x="382" y="218" text-anchor="middle" fill="rgba(120,90,20,0.55)" font-family="JetBrains Mono,monospace" font-size="6.5">Bd. Eroilor / Calea București</text>
-            <!-- Pollution zone -->
-            <rect x="150" y="130" width="450" height="255" fill="url(#rPoll)" rx="8"/>
-            <!-- Parks isolated -->
-            <ellipse cx="318" cy="230" rx="26" ry="20" fill="rgba(78,154,94,0.85)" stroke="rgba(45,90,54,0.7)" stroke-width="1.5"/>
-            <text x="318" y="227" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="7.5" font-weight="600">Parc</text>
-            <text x="318" y="236" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="7.5" font-weight="600">Titulescu</text>
-            <ellipse cx="490" cy="140" rx="36" ry="26" fill="rgba(78,154,94,0.85)" stroke="rgba(45,90,54,0.7)" stroke-width="1.5"/>
-            <text x="490" y="137" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="7.5" font-weight="600">Parc</text>
-            <text x="490" y="146" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="7.5" font-weight="600">Tractorul</text>
-            <ellipse cx="562" cy="354" rx="40" ry="28" fill="rgba(78,154,94,0.85)" stroke="rgba(45,90,54,0.7)" stroke-width="1.5"/>
-            <text x="562" y="351" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="7" font-weight="600">Zoo + Parc</text>
-            <text x="562" y="360" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="7" font-weight="600">Noua</text>
-            <ellipse cx="408" cy="290" rx="16" ry="12" fill="rgba(78,154,94,0.8)" stroke="rgba(45,90,54,0.6)" stroke-width="1"/>
-            <text x="408" y="287" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="6.5">Parc</text>
-            <text x="408" y="295" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="6.5">Civic</text>
-            <!-- Isolation markers -->
-            <text x="172" y="192" fill="rgba(180,60,30,0.75)" font-family="Plus Jakarta Sans,sans-serif" font-size="8" font-weight="600">✗ aer blocat</text>
-            <text x="410" y="96" fill="rgba(180,60,30,0.75)" font-family="Plus Jakarta Sans,sans-serif" font-size="8" font-weight="600">✗ parcuri izolate</text>
-            <text x="555" y="298" fill="rgba(180,60,30,0.75)" font-family="Plus Jakarta Sans,sans-serif" font-size="8" font-weight="600">✗ fără biodiversitate</text>
-            <!-- Title badge -->
-            <rect x="14" y="14" width="192" height="34" rx="5" fill="rgba(255,255,255,0.88)" stroke="rgba(180,60,30,0.25)" stroke-width="1"/>
-            <text x="24" y="28" fill="rgba(160,50,20,0.85)" font-family="JetBrains Mono,monospace" font-size="8.5" font-weight="500">SITUAȚIA ACTUALĂ</text>
-            <text x="24" y="40" fill="rgba(100,80,60,0.6)" font-family="JetBrains Mono,monospace" font-size="7">parcuri fragmentate</text>
-            <!-- Compass -->
-            <text x="726" y="428" fill="rgba(61,122,74,0.5)" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="600">N</text>
-            <line x1="735" y1="432" x2="735" y2="414" stroke="rgba(61,122,74,0.4)" stroke-width="1.2"/>
-            <polygon points="735,412 732,421 735,418 738,421" fill="rgba(61,122,74,0.5)"/>
-          </svg>
+          <div class="map-img-wrap" id="map-img-wrap">
+            <!-- Satellite base — place image at assets/map/brasov-base.jpg -->
+            <img src="assets/map/brasov-base.jpg"
+                 alt="Brașov imagine satelit"
+                 class="map-sat-img"
+                 id="map-sat-img"
+                 onerror="this.style.visibility='hidden'">
+            <!-- BioAir corridor overlay — fades in for 'după BioAir' tab -->
+            <svg id="map-overlay" class="map-overlay"
+                 viewBox="0 0 100 100" preserveAspectRatio="none"
+                 xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <filter id="corr-glow" x="-60%" y="-60%" width="220%" height="220%">
+                  <feGaussianBlur stdDeviation="1.5" result="blur"/>
+                  <feMerge>
+                    <feMergeNode in="blur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+              </defs>
+              <!-- Glow pass (rendered below crisp lines) -->
+              <line x1="48" y1="47" x2="55" y2="31" stroke="rgba(90,200,120,0.40)" stroke-width="3.0" stroke-linecap="round" filter="url(#corr-glow)"/>
+              <line x1="55" y1="31" x2="64" y2="43" stroke="rgba(90,200,120,0.38)" stroke-width="2.8" stroke-linecap="round" filter="url(#corr-glow)"/>
+              <line x1="48" y1="47" x2="53" y2="55" stroke="rgba(90,200,120,0.32)" stroke-width="2.4" stroke-linecap="round" filter="url(#corr-glow)"/>
+              <line x1="64" y1="43" x2="74" y2="65" stroke="rgba(90,200,120,0.32)" stroke-width="2.4" stroke-linecap="round" filter="url(#corr-glow)"/>
+              <line x1="53" y1="55" x2="74" y2="65" stroke="rgba(90,200,120,0.28)" stroke-width="2.2" stroke-linecap="round" filter="url(#corr-glow)"/>
+              <line x1="21" y1="78" x2="48" y2="47" stroke="rgba(90,200,120,0.28)" stroke-width="2.2" stroke-linecap="round" filter="url(#corr-glow)"/>
+              <!-- Crisp corridor lines -->
+              <line x1="48" y1="47" x2="55" y2="31" stroke="rgba(120,230,150,0.88)" stroke-width="0.9" stroke-linecap="round"/>
+              <line x1="55" y1="31" x2="64" y2="43" stroke="rgba(120,230,150,0.85)" stroke-width="0.85" stroke-linecap="round"/>
+              <line x1="48" y1="47" x2="53" y2="55" stroke="rgba(120,230,150,0.80)" stroke-width="0.75" stroke-linecap="round"/>
+              <line x1="64" y1="43" x2="74" y2="65" stroke="rgba(120,230,150,0.80)" stroke-width="0.75" stroke-linecap="round"/>
+              <line x1="53" y1="55" x2="74" y2="65" stroke="rgba(120,230,150,0.75)" stroke-width="0.70" stroke-linecap="round"/>
+              <line x1="21" y1="78" x2="48" y2="47" stroke="rgba(120,230,150,0.72)" stroke-width="0.80" stroke-linecap="round"/>
+              <!-- Park nodes — hollow circles matching provided map style -->
+              <circle cx="55" cy="31" r="2.2" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.90)" stroke-width="0.65"/>
+              <circle cx="48" cy="47" r="2.4" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.90)" stroke-width="0.65"/>
+              <circle cx="64" cy="43" r="2.0" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.88)" stroke-width="0.60"/>
+              <circle cx="74" cy="65" r="2.2" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.90)" stroke-width="0.65"/>
+              <!-- Forest / mountain squares (Tâmpa, Postăvarul) -->
+              <rect x="51.5" y="53.5" width="3.0" height="3.0" fill="none" stroke="rgba(255,255,255,0.80)" stroke-width="0.55"/>
+              <rect x="19.5" y="76.5" width="3.0" height="3.0" fill="none" stroke="rgba(255,255,255,0.72)" stroke-width="0.55"/>
+              <!-- Labels — bold mono white, matching provided map -->
+              <text x="58.5" y="30.5" fill="rgba(255,255,255,0.95)" font-family="'JetBrains Mono',monospace" font-size="2.6" font-weight="700">Tractoru</text>
+              <text x="45.0" y="46.0" fill="rgba(255,255,255,0.95)" font-family="'JetBrains Mono',monospace" font-size="2.6" font-weight="700" text-anchor="end">P. Titulescu</text>
+              <text x="67.0" y="42.5" fill="rgba(255,255,255,0.92)" font-family="'JetBrains Mono',monospace" font-size="2.3" font-weight="700">Centru civic</text>
+              <text x="77.5" y="65.0" fill="rgba(255,255,255,0.92)" font-family="'JetBrains Mono',monospace" font-size="2.6" font-weight="700">Noua</text>
+              <text x="55.5" y="56.2" fill="rgba(255,255,255,0.85)" font-family="'JetBrains Mono',monospace" font-size="2.3" font-style="italic">Tâmpa</text>
+              <text x="23.5" y="79.2" fill="rgba(255,255,255,0.78)" font-family="'JetBrains Mono',monospace" font-size="2.2" font-style="italic">Postăvarul</text>
+            </svg>
+          </div>
 
-          <!-- AFTER -->
-          <svg id="sv-after" viewBox="0 0 760 440" xmlns="http://www.w3.org/2000/svg" style="display:none;">
-            <defs>
-              <pattern id="pg2" width="24" height="24" patternUnits="userSpaceOnUse">
-                <path d="M24 0L0 0 0 24" fill="none" stroke="rgba(78,154,94,0.07)" stroke-width="0.5"/>
-              </pattern>
-              <filter id="gl">
-                <feGaussianBlur stdDeviation="3" result="b"/>
-                <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-              </filter>
-              <radialGradient id="rAir" cx="42%" cy="50%" r="52%">
-                <stop offset="0%" stop-color="rgba(78,154,94,0.1)"/>
-                <stop offset="100%" stop-color="transparent"/>
-              </radialGradient>
-            </defs>
-            <rect width="760" height="440" fill="#eef4ef"/>
-            <rect width="760" height="440" fill="url(#pg2)"/>
-            <!-- Mountains -->
-            <ellipse cx="82" cy="192" rx="76" ry="62" fill="rgba(61,122,74,0.22)" stroke="rgba(61,122,74,0.5)" stroke-width="1.5"/>
-            <text x="82" y="188" text-anchor="middle" fill="#2d5a36" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="600">TÂMPA</text>
-            <text x="82" y="199" text-anchor="middle" fill="#4e9a5e" font-family="JetBrains Mono,monospace" font-size="7">sursă aer curat</text>
-            <ellipse cx="638" cy="76" rx="106" ry="58" fill="rgba(61,122,74,0.22)" stroke="rgba(61,122,74,0.5)" stroke-width="1.5"/>
-            <text x="638" y="73" text-anchor="middle" fill="#2d5a36" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="600">POSTĂVARUL</text>
-            <text x="638" y="84" text-anchor="middle" fill="#4e9a5e" font-family="JetBrains Mono,monospace" font-size="7">sursă aer curat</text>
-            <!-- City grid -->
-            <rect x="225" y="140" width="310" height="210" fill="rgba(200,220,205,0.3)" stroke="rgba(100,150,110,0.15)" stroke-width="0.5" rx="2"/>
-            <g stroke="rgba(100,150,110,0.18)" stroke-width="0.5">
-              <line x1="260" y1="140" x2="260" y2="350"/><line x1="298" y1="140" x2="298" y2="350"/>
-              <line x1="334" y1="140" x2="334" y2="350"/><line x1="370" y1="140" x2="370" y2="350"/>
-              <line x1="406" y1="140" x2="406" y2="350"/><line x1="442" y1="140" x2="442" y2="350"/>
-              <line x1="478" y1="140" x2="478" y2="350"/><line x1="514" y1="140" x2="514" y2="350"/>
-              <line x1="225" y1="172" x2="535" y2="172"/><line x1="225" y1="204" x2="535" y2="204"/>
-              <line x1="225" y1="236" x2="535" y2="236"/><line x1="225" y1="268" x2="535" y2="268"/>
-              <line x1="225" y1="300" x2="535" y2="300"/><line x1="225" y1="332" x2="535" y2="332"/>
-            </g>
-            <!-- Air quality halo -->
-            <ellipse cx="370" cy="245" rx="220" ry="145" fill="url(#rAir)"/>
-            <!-- Boulevard faint -->
-            <line x1="150" y1="224" x2="610" y2="224" stroke="rgba(180,150,60,0.2)" stroke-width="1.5"/>
-            <!-- CORRIDORS -->
-            <line x1="158" y1="224" x2="292" y2="224" stroke="rgba(78,154,94,0.3)" stroke-width="10" stroke-linecap="round" filter="url(#gl)"/>
-            <line x1="158" y1="224" x2="292" y2="224" stroke="#4e9a5e" stroke-width="3.5" stroke-linecap="round"/>
-            <line x1="344" y1="210" x2="454" y2="166" stroke="rgba(78,154,94,0.3)" stroke-width="10" stroke-linecap="round" filter="url(#gl)"/>
-            <line x1="344" y1="210" x2="454" y2="166" stroke="#4e9a5e" stroke-width="3.5" stroke-linecap="round"/>
-            <line x1="526" y1="140" x2="548" y2="124" stroke="rgba(78,154,94,0.25)" stroke-width="7" stroke-linecap="round"/>
-            <line x1="526" y1="140" x2="548" y2="124" stroke="#6db882" stroke-width="2.5" stroke-linecap="round"/>
-            <line x1="318" y1="250" x2="392" y2="282" stroke="rgba(78,154,94,0.3)" stroke-width="10" stroke-linecap="round" filter="url(#gl)"/>
-            <line x1="318" y1="250" x2="392" y2="282" stroke="#4e9a5e" stroke-width="3.5" stroke-linecap="round"/>
-            <line x1="424" y1="290" x2="522" y2="328" stroke="rgba(78,154,94,0.25)" stroke-width="8" stroke-linecap="round" filter="url(#gl)"/>
-            <line x1="424" y1="290" x2="522" y2="328" stroke="#6db882" stroke-width="3" stroke-linecap="round"/>
-            <line x1="296" y1="224" x2="296" y2="314" stroke="rgba(78,154,94,0.22)" stroke-width="7" stroke-linecap="round"/>
-            <line x1="296" y1="224" x2="296" y2="314" stroke="#96d0a8" stroke-width="2" stroke-linecap="round"/>
-            <!-- Air flow arrows -->
-            <g stroke="rgba(61,122,74,0.55)" stroke-width="1.5" fill="none">
-              <line x1="150" y1="212" x2="168" y2="218"/><polyline points="162,213 168,218 162,222"/>
-              <line x1="150" y1="224" x2="168" y2="224"/><polyline points="162,219 168,224 162,228"/>
-              <line x1="150" y1="236" x2="168" y2="230"/><polyline points="162,225 168,230 162,234"/>
-            </g>
-            <text x="102" y="230" fill="rgba(45,90,54,0.6)" font-family="JetBrains Mono,monospace" font-size="7">aer curat →</text>
-            <!-- Parks glowing nodes -->
-            <ellipse cx="318" cy="230" rx="26" ry="20" fill="rgba(78,154,94,0.92)" stroke="rgba(45,90,54,0.8)" stroke-width="2" filter="url(#gl)"/>
-            <text x="318" y="227" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="7.5" font-weight="600">Parc</text>
-            <text x="318" y="236" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="7.5" font-weight="600">Titulescu</text>
-            <ellipse cx="490" cy="140" rx="36" ry="26" fill="rgba(78,154,94,0.92)" stroke="rgba(45,90,54,0.8)" stroke-width="2" filter="url(#gl)"/>
-            <text x="490" y="137" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="7.5" font-weight="600">Parc</text>
-            <text x="490" y="146" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="7.5" font-weight="600">Tractorul</text>
-            <ellipse cx="562" cy="354" rx="40" ry="28" fill="rgba(78,154,94,0.92)" stroke="rgba(45,90,54,0.8)" stroke-width="2" filter="url(#gl)"/>
-            <text x="562" y="351" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="7" font-weight="600">Zoo + Parc</text>
-            <text x="562" y="360" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="7" font-weight="600">Noua</text>
-            <ellipse cx="408" cy="290" rx="16" ry="12" fill="rgba(78,154,94,0.9)" stroke="rgba(45,90,54,0.7)" stroke-width="1.5" filter="url(#gl)"/>
-            <text x="408" y="287" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="6.5">Parc</text>
-            <text x="408" y="295" text-anchor="middle" fill="#fff" font-family="Plus Jakarta Sans,sans-serif" font-size="6.5">Civic</text>
-            <!-- Podul Viu marker -->
-            <rect x="328" y="210" width="54" height="13" rx="3" fill="rgba(245,232,200,0.9)" stroke="rgba(184,136,46,0.6)" stroke-width="1"/>
-            <text x="355" y="220" text-anchor="middle" fill="rgba(122,92,30,0.9)" font-family="JetBrains Mono,monospace" font-size="6.5">Podul Viu (pilot)</text>
-            <!-- Title badge -->
-            <rect x="14" y="14" width="214" height="34" rx="5" fill="rgba(255,255,255,0.9)" stroke="rgba(61,122,74,0.3)" stroke-width="1"/>
-            <text x="24" y="28" fill="#2d5a36" font-family="JetBrains Mono,monospace" font-size="8.5" font-weight="500">DUPĂ BioAir – 5 coridoare</text>
-            <text x="24" y="40" fill="rgba(78,154,94,0.7)" font-family="JetBrains Mono,monospace" font-size="7">rețea biologică conectată</text>
-            <!-- Compass -->
-            <text x="726" y="428" fill="rgba(61,122,74,0.5)" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="600">N</text>
-            <line x1="735" y1="432" x2="735" y2="414" stroke="rgba(61,122,74,0.4)" stroke-width="1.2"/>
-            <polygon points="735,412 732,421 735,418 738,421" fill="rgba(61,122,74,0.5)"/>
-          </svg>
         </div>
-        <div class="map-caption" id="map-cap">Schemă schematică bazată pe geometria reală a Brașovului · Parcuri în poziții aproximative · Nu reprezintă GIS oficial</div>
+        <div class="map-caption" id="map-cap">Imagine satelit Brașov · Parcuri în poziții reale · Coridoarele reprezintă propunerea BioAir · Nu reprezintă GIS oficial</div>
       </div>
       <div class="map-sidebar">
         <div class="map-leg-card">
           <h4>Legendă</h4>
-          <div class="leg-i"><div class="leg-c" style="background:rgba(78,154,94,0.85);border:1.5px solid rgba(45,90,54,0.6);"></div>Parc / spațiu verde existent</div>
+          <div class="leg-i"><div class="leg-c" style="background:rgba(78,154,94,0.85);border:1.5px solid rgba(45,90,54,0.6);"></div>Parc / nod verde</div>
           <div class="leg-i"><div class="leg-c" style="background:linear-gradient(90deg,rgba(78,154,94,0.7),#4e9a5e);"></div>Coridor verde BioAir</div>
-          <div class="leg-i"><div class="leg-c" style="background:rgba(245,232,200,0.9);border:1px solid rgba(184,136,46,0.5);"></div>Podul Viu (pilot)</div>
-          <div class="leg-i"><div class="leg-c" style="background:rgba(61,122,74,0.2);border:1px solid rgba(61,122,74,0.35);"></div>Masiv muntos</div>
-          <div class="leg-i"><div class="leg-c" style="background:rgba(180,80,40,0.15);border:1px dashed rgba(180,80,40,0.35);"></div>Zonă poluată (actual)</div>
+          <div class="leg-i"><div class="leg-c" style="background:rgba(61,122,74,0.2);border:1px solid rgba(61,122,74,0.35);"></div>Tâmpa / Postăvarul</div>
         </div>
         <div class="map-info-card" id="map-info">
           <h4>Situația actuală</h4>
           <p>Parcurile Brașovului există, dar sunt complet izolate între ele. Aerul curat de pe Tâmpa nu poate pătrunde în centrul urban din cauza blocajelor create de geometria străzilor.</p>
-          <span class="map-tag">Schemă bazată pe geometria reală</span>
+          <span class="map-tag">Imagine satelit reală · Brașov</span>
         </div>
       </div>
     </div>
@@ -541,22 +445,57 @@
   </div>
 </section>
 
+<!-- ── PODUL VIU ──────────────────────────────── -->
+<section class="sec" id="podul-viu">
+  <div class="sec-blob" style="width:600px;height:600px;background:radial-gradient(ellipse,rgba(110,184,130,.14) 0%,transparent 70%);bottom:-150px;left:-180px;"></div>
+  <div class="sec-inner">
+    <div class="sec-eyebrow rv">06 — Pilot · Faza II</div>
+    <h2 class="sec-title rv rv-d1">„Podul Viu"<br><em>un pod care respiră</em></h2>
+    <div class="pv-layout">
+      <div class="pv-img-wrap rv rv-d2">
+        <img src="assets/podul-viu/podul-viu.png"
+             alt="Podul Viu – vizualizare concept Brașov"
+             class="pv-img"
+             onerror="this.style.visibility='hidden'">
+        <div class="pv-img-caption">Vizualizare concept · Podul Viu · Brașov · Structură supraînălțată cu vegetație integrată</div>
+      </div>
+      <div class="pv-content">
+        <p class="pv-lead rv rv-d3">O structură modulară supraînălțată deasupra unui bulevard urban, acoperită cu vegetație funcțională pe trei straturi biologice. Primul pod viu din România — 60 de metri de coridoare biologice active care transformă infrastructura în ecosistem.</p>
+        <div class="pv-points">
+          <div class="pv-pt rv rv-d1">
+            <div class="pv-pt-label">Structură</div>
+            <div class="pv-pt-text">Oțel ușor modular și substrat vegetal de 40 cm. Greutate adaptată infrastructurii stradale existente, fără fundații speciale.</div>
+          </div>
+          <div class="pv-pt rv rv-d2">
+            <div class="pv-pt-label">Vegetație</div>
+            <div class="pv-pt-text">Carpen, tei argintiu și plop tremurător pe trei niveluri biologice, cu irigare pasivă prin substrat și sistem de drenaj integrat.</div>
+          </div>
+          <div class="pv-pt rv rv-d3">
+            <div class="pv-pt-label">Impact</div>
+            <div class="pv-pt-text">Estimat −18% PM2.5 în zona pilot, reducere a insulei de căldură cu 2–3°C. Atracție publică și punct de identitate urbană pentru Brașov.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ── IMPLEMENTARE ────────────────────────────── -->
 <section class="sec" id="implementare">
   <div class="sec-inner">
-    <div class="sec-eyebrow rv">06 — Plan de implementare</div>
+    <div class="sec-eyebrow rv">07 — Plan de implementare</div>
     <h2 class="sec-title rv rv-d1">Trei faze,<br><em>un oraș transformat</em></h2>
     <div class="impl-grid">
       <div class="timeline rv rv-d1">
         <div class="tphase">
           <div class="tp-label">Faza I · 0–12 luni</div>
           <h3>Pilot la sol</h3>
-          <p>Studiu meteorologic și cartografiere direcții de vânt. Coridor pilot Tâmpa – Parc Titulescu (~900m, Bd. Eroilor). Plantare al doilea rând de arbori + arbuști filtranți. Instalare 3 senzori calitate aer. Cost estimat: 38.000–69.000 EUR.</p>
+          <p>Coridor pilot Tâmpa → Parc Titulescu. Plantări profesionale (carpen, tei argintiu, plop tremurător), senzori de calitate a aerului, studiu de vânt. Cost estimat: 150.000–250.000 EUR.</p>
         </div>
         <div class="tphase">
           <div class="tp-label">Faza II · 1–3 ani</div>
           <h3>Extindere rețea + Podul Viu</h3>
-          <p>Conectarea Parcului Tractorul și Parc Civic. Construcția „Podului Viu" pilot (structură modulară 50–80m). Extindere rețea senzori. Lansare platformă publică de date. Cost estimat: 180.000–280.000 EUR.</p>
+          <p>Extindere rețea pe coridoarele principale + Podul Viu pilot (60 m, structură modulară supraînălțată cu vegetație integrată). Extindere rețea senzori. Lansare platformă publică de date. Cost estimat: 1,5–2,5 milioane EUR.</p>
         </div>
         <div class="tphase">
           <div class="tp-label">Faza III · 3–7 ani</div>
@@ -581,34 +520,30 @@
 <!-- ── BUGET ──────────────────────────────────── -->
 <section class="sec" id="buget">
   <div class="sec-inner">
-    <div class="sec-eyebrow rv">07 — Bugetul estimativ</div>
-    <h2 class="sec-title rv rv-d1">Resurse necesare:<br><em>Faza pilot</em></h2>
+    <div class="sec-eyebrow rv">08 — Bugetul estimativ</div>
+    <h2 class="sec-title rv rv-d1">Resurse necesare:<br><em>Toate fazele</em></h2>
     <div class="budget-grid">
       <div class="rv rv-d1">
         <table class="bt">
           <thead>
-            <tr><th>Categorie</th><th>Detalii</th><th>Estimare (EUR)</th></tr>
+            <tr><th>Faza</th><th>Descriere</th><th>Estimare (EUR)</th></tr>
           </thead>
           <tbody>
-            <tr><td>Studiu de fezabilitate</td><td>Cartografiere vânt, modelare, analiză aer</td><td>8.000–15.000</td></tr>
-            <tr><td>Material vegetal</td><td>Arbori (50–80 buc.), arbuști, plante acoperire</td><td>12.000–20.000</td></tr>
-            <tr><td>Infrastructură sol</td><td>Pregătire teren, substraturi, irigare</td><td>10.000–18.000</td></tr>
-            <tr><td>Senzori monitorizare</td><td>3–5 stații calitate aer + IoT</td><td>5.000–10.000</td></tr>
-            <tr><td>Comunicare și educație</td><td>Panouri, platformă date, ateliere</td><td>3.000–6.000</td></tr>
+            <tr><td><strong>Faza I</strong> · 0–12 luni</td><td>Coridor pilot Tâmpa → Parc Titulescu. Plantări profesionale (carpen, tei argintiu, plop tremurător), senzori de calitate a aerului, studiu de vânt.</td><td>150.000–250.000</td></tr>
+            <tr><td><strong>Faza II</strong> · 1–3 ani</td><td>Extindere rețea pe coridoarele principale + Podul Viu pilot (60 m, structură modulară supraînălțată cu vegetație integrată).</td><td>1,5–2,5 milioane</td></tr>
+            <tr><td><strong>Faza III</strong> · 3–7 ani</td><td>Rețea completă (12–15 km coridoare), Atlas Climatic Local publicat, sistem de monitorizare extins.</td><td>5–10 milioane</td></tr>
           </tbody>
           <tfoot>
-            <tr><td colspan="2"><strong>TOTAL Faza 1 (fără Podul Viu)</strong></td><td><strong>38.000–69.000 EUR</strong></td></tr>
+            <tr><td colspan="2"><strong>TOTAL proiect integral</strong></td><td><strong>~6,6–12,8 milioane EUR</strong></td></tr>
           </tfoot>
         </table>
-        <p class="budget-note">Buget orientativ pentru coridorul pilot de ~900m la sol. Podul Viu (Faza 2, est. 30.000–60.000 EUR) este separat. Valorile reale se stabilesc prin studiu de fezabilitate și licitație publică.</p>
+        <p class="budget-note">Cifrele sunt estimări preliminare bazate pe costuri reale ale proiectelor europene similare (Seoul Skygarden, Highline NYC, coridoare verzi în Copenhaga și Viena) și pe prețurile pieței românești pentru plantări urbane profesionale (150–400 EUR per copac matur, inclusiv groapă, substrat, tutore și garanție). Studiul de fezabilitate detaliat va valida cifrele finale.</p>
       </div>
       <div class="funding rv rv-d2">
         <h3>Surse de finanțare</h3>
-        <div class="f-item"><div class="f-dot"></div><p><strong>FEDR 2021–2027</strong>Programe axate pe biodiversitate urbană și adaptare climatică – aplicabil direct pentru BioAir.</p></div>
-        <div class="f-item"><div class="f-dot"></div><p><strong>Programul LIFE al UE</strong>Finanțare directă pentru calitate aer și biodiversitate – Brașovul îndeplinește deja criteriile de eligibilitate.</p></div>
-        <div class="f-item"><div class="f-dot"></div><p><strong>Buget local Brașov (PAED)</strong>Planul de Acțiune pentru Energie Durabilă și Climă, la care Brașovul este semnatară.</p></div>
-        <div class="f-item"><div class="f-dot"></div><p><strong>Parteneriate private (CSR)</strong>Companii locale din turism, imobiliare și tehnologie cu angajamente publice de sustenabilitate.</p></div>
-        <div class="f-item"><div class="f-dot"></div><p><strong>Finanțare civică</strong>Implicarea cetățenilor în cofinanțarea unui element identitar al orașului.</p></div>
+        <div class="f-item"><div class="f-dot"></div><p><strong>Co-finanțare municipală</strong>Primăria Brașov, în cadrul Planului de Acțiune pentru Energie Durabilă și Climă (PAED).</p></div>
+        <div class="f-item"><div class="f-dot"></div><p><strong>Fonduri europene – programul LIFE</strong>Granturi 1–10 milioane EUR pentru proiecte de mediu; programe sub Green Deal și fonduri PNRR pentru tranziție verde.</p></div>
+        <div class="f-item"><div class="f-dot"></div><p><strong>Parteneriate private</strong>Companii cu obiective ESG, sponsorizări corporative din turism, imobiliare și tehnologie.</p></div>
       </div>
     </div>
   </div>
@@ -639,6 +574,7 @@
     <h2>Brașovul poate deveni<br><em>un model național</em></h2>
     <p>BioAir nu este o idee abstractă. Este un plan fezabil, fundamentat științific, inspirat din decenii de practică europeană și adaptat la realitatea Brașovului. Primul pas este un coridor pilot de 900m.</p>
     <div class="cta-btns">
+      <a href="#harta" class="cta-btn-fill">Explorează harta →</a>
       <a href="#problema" class="cta-btn-ghost">Recitește proiectul</a>
     </div>
   </div>

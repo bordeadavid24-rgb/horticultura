@@ -545,6 +545,31 @@ h3.fez-col::after { content:''; flex:1; height:1px; background:var(--gold-pale);
 .mtab.on { color:var(--green-700); background:var(--green-50); }
 .mtab:hover:not(.on) { background:rgba(78,154,94,.04); color:var(--text-secondary); }
 .map-canvas svg { width:100%; display:block; }
+/* ── Map satellite image system (Phase 7) ── */
+.map-img-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;    /* matches square satellite image; SVG overlay aligns exactly */
+  overflow: hidden;
+  background: #1b231e;    /* dark fallback while image loads */
+}
+.map-sat-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  display: block;
+}
+.map-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.55s ease;
+  pointer-events: none;
+}
+.map-overlay.active { opacity: 1; }
 .map-caption {
   padding:.85rem 1.2rem; border-top:1px solid var(--border-light);
   font-family:var(--ff-mono); font-size:.62rem; color:var(--text-muted);
@@ -606,10 +631,81 @@ h3.fez-col::after { content:''; flex:1; height:1px; background:var(--gold-pale);
 .icard p { font-size:.84rem; color:var(--text-secondary); line-height:1.72; }
 
 /* ─────────────────────────────────────────────
+   PODUL VIU
+───────────────────────────────────────────── */
+#podul-viu { background: var(--bg-deep); }
+#podul-viu .sec-eyebrow { color: var(--green-300); }
+#podul-viu .sec-eyebrow::before { background: var(--green-400); }
+#podul-viu h2.sec-title { color: var(--text-on-dark); }
+#podul-viu h2.sec-title em { color: var(--green-400); }
+
+.pv-layout {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 4rem;
+  margin-top: 3rem;
+  align-items: center;
+}
+.pv-img-wrap {
+  position: relative;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  background: var(--green-900);
+}
+.pv-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 30%;
+  display: block;
+}
+.pv-img-caption {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: .85rem 1.2rem;
+  font-family: var(--ff-mono);
+  font-size: .58rem;
+  letter-spacing: .12em;
+  color: rgba(255,255,255,0.50);
+  background: linear-gradient(transparent, rgba(0,0,0,0.50));
+}
+.pv-content { display: flex; flex-direction: column; }
+.pv-lead {
+  font-size: 1rem;
+  line-height: 1.82;
+  color: rgba(232,242,234,0.82);
+  margin-bottom: 2.5rem;
+}
+.pv-points { display: flex; flex-direction: column; gap: 0; }
+.pv-pt {
+  display: grid;
+  grid-template-columns: 78px 1fr;
+  gap: 1.2rem;
+  align-items: start;
+  padding: 1.4rem 0;
+  border-top: 1px solid rgba(110,184,130,0.14);
+}
+.pv-pt:last-child { border-bottom: 1px solid rgba(110,184,130,0.14); }
+.pv-pt-label {
+  font-family: var(--ff-mono);
+  font-size: .6rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--green-400);
+  padding-top: .15rem;
+}
+.pv-pt-text {
+  font-size: .84rem;
+  line-height: 1.72;
+  color: rgba(232,242,234,0.68);
+}
+
+/* ─────────────────────────────────────────────
    IMPLEMENTARE – timeline
 ───────────────────────────────────────────── */
 #implementare {
-  background: linear-gradient(180deg, var(--bg-page) 0%, var(--bg-tinted) 8%, var(--bg-surface) 100%);
+  background: linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-page) 5%, var(--bg-tinted) 18%, var(--bg-surface) 100%);
 }
 .impl-grid { display:grid; grid-template-columns:1fr 1fr; gap:4rem; margin-top:3rem; }
 .timeline { position:relative; padding-left:2.2rem; }
@@ -664,7 +760,7 @@ table.bt tfoot td {
   color:var(--green-700); font-weight:700; font-size:.9rem;
   border-top:1px solid var(--border-mid); border-bottom:none; background:var(--green-50);
 }
-.budget-note { font-family:var(--ff-mono); font-size:.62rem; color:var(--text-muted); line-height:1.6; margin-top:.9rem; font-style:italic; }
+.budget-note { font-family:var(--ff-mono); font-size:.66rem; color:var(--text-muted); line-height:1.65; margin-top:.9rem; }
 .funding h3 { font-family:var(--ff-serif); font-size:1.1rem; font-weight:700; color:var(--text-primary); margin-bottom:1.4rem; }
 .f-item { display:flex; gap:.8rem; align-items:flex-start; margin-bottom:1rem; padding-bottom:1rem; border-bottom:1px solid var(--border-light); }
 .f-item:last-child { border-bottom:none; margin-bottom:0; padding-bottom:0; }
@@ -747,7 +843,7 @@ table.bt tfoot td {
 #info-proiect {
   background: var(--bg-page);
   border-top: 1px solid var(--border-light);
-  padding: 3rem 6vw;
+  padding: 4rem 6vw 3rem;
   display: flex;
   justify-content: center;
 }
@@ -897,7 +993,7 @@ footer p { font-family:var(--ff-mono); font-size:.62rem; color:var(--text-faint)
 @media(max-width:900px) {
   .hero-inner { grid-template-columns:1fr; gap:3rem; }
   .hero-stats { display:none; }
-  .prob-grid, .inno-grid { grid-template-columns:1fr; }
+  .prob-grid, .inno-grid, .pv-layout { grid-template-columns:1fr; }
   .sol-grid, .fez-grid, .impl-grid, .budget-grid { grid-template-columns:1fr; gap:2.5rem; }
   .map-wrap { grid-template-columns:1fr; }
   .map-sidebar { display:none; }
@@ -1220,4 +1316,37 @@ footer p { font-family:var(--ff-mono); font-size:.62rem; color:var(--text-faint)
 }
 @media (prefers-reduced-motion: reduce) {
   #airflow-bg { display: none; }
+}
+
+/* ─────────────────────────────────────────────
+   MOBILE – small phones (≤600px)
+───────────────────────────────────────────── */
+@media (max-width: 600px) {
+  /* Reduce tall section padding for phone viewports */
+  .sec { padding: 5rem 5vw; }
+  #cta  { padding: 5rem 5vw; }
+
+  /* Hero buttons: wrap to full-width stack instead of overflowing */
+  .hero-actions { flex-wrap: wrap; }
+  .hero-actions .btn-fill,
+  .hero-actions .btn-outline { flex: 1 1 100%; justify-content: center; }
+
+  /* Podul Viu: reduce gap between stacked image and content */
+  .pv-layout { gap: 2rem; }
+
+  /* Budget table: enable horizontal scroll so 3-column table doesn't clip */
+  .budget-grid > div:first-child { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Info-proiect: stack label/value vertically on narrow screens */
+  .info-row { flex-direction: column; gap: .35rem; }
+  .info-val  { text-align: left; }
+}
+
+/* ─────────────────────────────────────────────
+   MOBILE – very narrow (≤480px)
+───────────────────────────────────────────── */
+@media (max-width: 480px) {
+  /* Tree intro header: reduce padding, drop secondary text block */
+  .tree-header-bar { padding: 0 4vw; }
+  .thb-right { display: none; }
 }
