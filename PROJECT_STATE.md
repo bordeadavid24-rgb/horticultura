@@ -1,5 +1,5 @@
 # BioAir Brașov — Project State
-> Last updated: 2026-05-10 (session 40 — mobile responsiveness pass)
+> Last updated: 2026-05-10 (session 41 — mobile intro canvas fallback fix)
 
 ## Files
 ```

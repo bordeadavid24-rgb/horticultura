@@ -998,9 +998,10 @@ function swMap(which, btn) {
     const gY = H * (0.71 + camYNorm * 0.034);
     const camAngle = -0.3 + p * Math.PI * 2.5;
     const pxShift  = -Math.sin(camAngle) * W * 0.035;
-    // 2D buildings suppressed when Three.js is active — 3D cityGroup replaces them.
+    // 2D buildings suppressed when Three.js is active AND visible — 3D cityGroup replaces them.
+    // On mobile (#three-wrap display:none) clientWidth is 0, so 2D fallback renders instead.
     // Canvas sky, ground, road, and horizon haze remain regardless (below this block).
-    if (!threeRenderer) {
+    if (!threeRenderer || !threeCanvas.parentElement.clientWidth) {
       const buildings = [
         { x: .03, w: .07, h: .22 }, { x: .11, w: .05, h: .15 }, { x: .17, w: .09, h: .30 },
         { x: .27, w: .05, h: .17 }, { x: .63, w: .06, h: .21 }, { x: .70, w: .09, h: .33 },
@@ -1226,10 +1227,10 @@ function swMap(which, btn) {
     const trunkH   = lerp(16, H * .37, sim.trunkGrowth);
     const trunkTop = gY - trunkH;
 
-    // Suppress 2D tree when Three.js is promoted — prevents double-tree conflict.
-    // threeRenderer is set only if THREE.js loads; remains undefined on CDN failure,
-    // which restores full 2D fallback automatically. Code preserved in both branches.
-    if (!threeRenderer) {
+    // Suppress 2D tree when Three.js is promoted AND visible — prevents double-tree conflict.
+    // On mobile (#three-wrap display:none) clientWidth is 0, so 2D fallback renders instead.
+    // threeRenderer remains undefined on CDN failure, restoring full 2D fallback automatically.
+    if (!threeRenderer || !threeCanvas.parentElement.clientWidth) {
       ctx.strokeStyle = `rgb(${Math.round(lerp(130,152,sim.p))},${Math.round(lerp(98,115,sim.p))},${Math.round(lerp(68,78,sim.p))})`;
       ctx.lineWidth   = lerp(4, 12, sim.trunkWeight);
       ctx.lineCap     = 'round';
